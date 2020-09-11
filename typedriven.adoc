@@ -1,10 +1,20 @@
-= Type-driven programming in Rust
-
+= Type-driven programming
+encoding information in types.
 
 We often use the same type in different contexts -> we know more information about the current value than its type
 Examples:
+* A String can be a UserId, an Email, an error message, ...
 * FilePaths can be relative or absolute and can point to directories or files (or just arbitrary strings)
 * A doSomething-request in our web backend can be just received or already validated
+
+There's a range of type safety, from dynamic and weakly typed programming languages, stringly typed programming in static languages all the way to https://www.idris-lang.org/[Idris] and formal verification.
+I'm going to talk about some ways to increase type-safety that I still find practical (and maybe show some impractical things too).
+
+Why (static) type-safety:
+While writing, programmers usually have an idea what type each value will have.
+Sometimes, people make mistakes and encounter a type error.
+Statically typed languages show the error before the software is ever run, which can be helpful.
+
 Sometimes we encode part of the information in types, but rarely all of it.
 
 The difference between
@@ -63,6 +73,4 @@ bike repair shop?
 ** validate shop state
 * Repair the bike
 ...
-
-
 
