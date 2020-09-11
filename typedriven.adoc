@@ -1,3 +1,68 @@
-
 = Type-driven programming in Rust
+
+
+We often use the same type in different contexts -> we know more information about the current value than its type
+Examples:
+* FilePaths can be relative or absolute and can point to directories or files (or just arbitrary strings)
+* A doSomething-request in our web backend can be just received or already validated
+Sometimes we encode part of the information in types, but rarely all of it.
+
+The difference between
+
+```rust
+fn handle_request(request: Request) {
+    if validate(&request) {
+        do_something_with(request);
+    } else {
+        log_error(request);
+    }
+}
+```
+
+and
+
+```rust
+fn handle_request(request: Request) {
+    match validate(request) {
+        Ok(validated) => do_something_with(validated),
+        Err(validation_error) => log_error(validation_error)
+    }
+}
+```
+
+is explained in Alexis King's post https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/
+
+The type-driven approach not only makes the codebase safer by making it a type error to skip the validation step, it also helps in documenting the codebase a bit (I'm not saying that type signatures are enough documentation though).
+
+Compare
+
+```rust
+fn do_something_with(request: Request) {...}
+```
+
+with
+
+```rust
+fn do_something_with(request: ValidatedRequest) {...}
+```
+
+The second version makes it explicit that validation needs to come first.
+
+This approach can also help in design.
+A common issue (mentioned in the "Parse, don't validate" article) is that fragments of validation logic are littered throughout the codebase wherever it occured to the developer or wherever the necessary data was available
+
+Example: request validation first, then checking for conflicts in the database way later, then checking with another backend in another file after a few branches...
+Counter: How to handle a case like this with the proposed approach? TODO
+
+Rest:
+Type variables instead of different types
+Path showcase
+bike repair shop?
+* Repair request
+** validate request integrity
+** validate shop state
+* Repair the bike
+...
+
+
 
