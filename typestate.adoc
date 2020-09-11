@@ -1,3 +1,128 @@
 = The Typestate pattern in Rust
 shown in comparison to Kotlin
 inspired by http://cliffle.com/blog/rust-typestate/ and https://chrisdone.com/posts/path-package/.
+
+When a type has many states, you won't want to duplicate it for each state:
+
+* DbUser
+* NewUser
+* ValidatedNewUser
+* MergedUser
+* can you think of more?
+
+if only to not write the same user fields n times.
+One way to deduplicate this would be to keep all common fields in one type and embed this type in all the variants:
+
+```rust
+struct CommonUserFields {
+    name: Option<UserName>,
+    birthday: Option<Birthday>,
+    email: Email,
+    preferences: Preferences,
+    ...
+}
+
+struct DbUser {
+    id: RowId,
+    fields: CommonUserFields,
+}
+
+struct NewUser {
+    referral_token: Option<ReferralToken>,
+    fields: CommonUserFields,
+}
+
+struct ValidatedNewUser {
+    fields: CommonUserFields,
+}
+```
+
+This is still a bit verbose, but less so than duplicating all the fields.
+
+Another way to express this is often called the typestate pattern.
+
+== Different user states using the typestate pattern
+
+```rust
+struct User<S> {
+    name: Option<UserName,
+    birthday: Option<Birthday>,
+    email: Email,
+    preferences: Preferences,
+    state: S,
+}
+
+struct Db {
+    id: RowId
+}
+// the same type names can be used via type aliases:
+type DbUser = User<Db>;
+// or not
+fn storeUser(User<Validated>) -> Result<User<Db>, DbError> { todo!() }
+
+struct New(Option<ReferralToken);
+type NewUser = User<New>;
+fn create_user(new_user: NewUser) -> Result<DbUser, CreateUserError> { todo!() }
+```
+
+== An example of the typestate pattern
+
+It basically consists of expressing some state of the type with a type variable.
+Compare:
+
+```rust
+enum TrafficLightColor {
+    Red,
+    Yellow,
+    Green,
+}
+struct TrafficLights {
+    color: TrafficLightColor,
+}
+impl TrafficLights {
+    fn color(&self) -> TrafficLightColor { &self.color }
+    fn is_red(&self) -> bool { self.color == TrafficLightColor::Red }
+    fn is_yellow(&self) -> bool { self.color == TrafficLightColor::Yellow }
+    fn is_green(&self) -> bool { self.color == TrafficLightColor::Green }
+    fn turn_red(&mut self) {
+        if self.is_yellow() {
+            self.color = TrafficLightColor::Red
+        } else {
+            panic!("this should really return a Result<(), SomeError>!")
+        }
+    }
+    // turn_yellow and turn_green is left as an exercise to the reader
+}
+```
+
+with
+
+```rust
+// the colors are not namespaced here.
+// if that's important, the names of the structs can be changed
+// or the struct definitions can be moved into a `mod traffic_light_colors {}`
+struct Red;
+struct Yellow;
+struct Green;
+struct TrafficLights<C> {
+    color: C,
+}
+impl TrafficLights<Yellow> {
+    fn turn_red(self) -> TrafficLights<Red> {
+        Self { color: Red }
+    }
+}
+```
+
+some differences in the API are necessary here.
+It's no longer possible to mutate a yellow traffic light into a red traffic light, so the mutable API is no longer possible.
+The first TrafficLights version could have also offered the functional API `fn turn_red(self) -> Self`, so here the version that uses the typestate pattern has less available options.
+On the other hand, the turn_red function is now infallible as it can only be called with traffic lights that are in the correct state.
+
+Another difference is that checking the current color of a traffic light whose state is unknown looks completely different.
+In the initial version, writing `fn is_red<T>(tl: &TrafficLights<T>) -> bool` is actually not possible is it would require runtime reflection, which doesn't exist in rust (FIXME is this a correct description of the problem?)
+
+cool bear style aside: what would the language need to offer to implement `fn is_red<T>(color: &T) -> bool`?
+
+If I need to handle values in an unknown state but still want to use the typestate pattern, some additional machinery is required.
+TODO do I want to show this?

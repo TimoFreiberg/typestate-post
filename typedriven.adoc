@@ -51,7 +51,7 @@ The second version makes it explicit that validation needs to come first.
 This approach can also help in design.
 A common issue (mentioned in the "Parse, don't validate" article) is that fragments of validation logic are littered throughout the codebase wherever it occured to the developer or wherever the necessary data was available
 
-Example: request validation first, then checking for conflicts in the database way later, then checking with another backend in another file after a few branches...
+Example: request validation first, then checking for conflicts in the database way later, then checking with another backend even later...
 Counter: How to handle a case like this with the proposed approach? TODO
 
 Rest:
