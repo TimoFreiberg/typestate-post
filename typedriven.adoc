@@ -10,12 +10,32 @@ Examples:
 There's a range of type safety, from dynamic and weakly typed programming languages, stringly typed programming in static languages all the way to https://www.idris-lang.org/[Idris] and formal verification.
 I'm going to talk about some ways to increase type-safety that I still find practical (and maybe show some impractical things too).
 
-Why (static) type-safety:
+Why (static) type-safety: (TODO probably remove this)
 While writing, programmers usually have an idea what type each value will have.
 Sometimes, people make mistakes and encounter a type error.
 Statically typed languages show the error before the software is ever run, which can be helpful.
 
 Sometimes we encode part of the information in types, but rarely all of it.
+(alt?) Most of the time, we don't put every bit of information in the types.
+For example, while we might give specific string types descriptive names like `UserId`, we're usually fine with giving a field like `isVerified` the type `boolean` (which https://github.com/quchen/articles/blob/master/algebraic-blindness.md[can lead to the "boolean blindness" problem])
+
+Some widely accepted ways of moving information into types are:
+* Using descriptive String wrappers to make type signatures more understandable and prevent mixing up e.g. `UserId` and `Email`.
+* Using enums instead of Strings/Integers to constrain the set of possible values and give each a name.
+* Using different types for the values retrieved from the database and the data received or returned in the API.footnote:[This also helps decouple the database schema and the API structure. This might even be the primary reason for using separate types, but it also prevents accidentally storing the request values in the database.]
+* TODO more?
+
+There are a few different reasons to give values their own type:
+
+* Values like `Email`, `AccessToken`, (TODO more examples from a different domain please?) which might not be used in very complex logic (probably just stored/printed/sent/compared with other values of the same type)
+  Here, types mostly help documenting the code and prevent mixing up completely different things.
+  This approach is relatively common and uncontroversial.
+  It also has no inherent drawbacks (meaning it's never wrong to constrain an email value to being an `Email`)
+  In practice though, there's some overhead involved depending on the programming language.
+footnote:[Compared to Java, Kotlin makes it much easier to cheaply declare String wrappers via the https://kotlinlang.org/docs/reference/data-classes.html[`data class`] feature.]
+* Making
+
+== Separate types for important states
 
 The difference between
 
