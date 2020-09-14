@@ -25,15 +25,46 @@ Some widely accepted ways of moving information into types are:
 * Using different types for the values retrieved from the database and the data received or returned in the API.footnote:[This also helps decouple the database schema and the API structure. This might even be the primary reason for using separate types, but it also prevents accidentally storing the request values in the database.]
 * TODO more?
 
-There are a few different reasons to give values their own type:
+== Level 1: Using types to distinguish completely different values
+aka static types, the basics.
 
-* Values like `Email`, `AccessToken`, (TODO more examples from a different domain please?) which might not be used in very complex logic (probably just stored/printed/sent/compared with other values of the same type)
-  Here, types mostly help documenting the code and prevent mixing up completely different things.
-  This approach is relatively common and uncontroversial.
-  It also has no inherent drawbacks (meaning it's never wrong to constrain an email value to being an `Email`)
+.Primitive Wrappers
+
+Values like `Email`, `AccessToken`, (TODO more examples from a different domain please?) which might not be used in very complex logic (probably just stored/printed/sent/compared with other values of the same type)
+Here, types mostly help documenting the code and prevent mixing up completely different things.
+
+Pros:
++ Prevents mix-ups with values of different types
++ Helps document the code
+
+Cons:
+- Syntactic overhead (how much depends on the language)
+- Runtime overhead (only in some languages, and even then it matters very rarely)
+
+Verdict:
+Use for values which are used in logic, leave values that are just dragged through the program primitive.
+So for example, if we have a `data class User(val email: String)` and a `fun searchByEmail(email: String): User?`, introducing an `Email` type would help.
+On the other hand, if that `User` class also has a `account_description` field which is only ever passed back and forth from API to DB but never touched in the logic, it's fine to leave that as a `String`.
+
+Kotlin note:
+One of the important improvements of Kotlin over Java is the introduction of data classes which makes using wrapper types less painful.
+```kotlin
+data class Email(val value: String)
+```
+
+Rust note:
+This has no runtime overhead in Rust at all.
+This is sometimes called the newtype-pattern, which comes from the Haskell world.footnote:[https://doc.rust-lang.org/stable/rust-by-example/generics/new_types.html]
+Also syntactically lightweight like in Kotlin, although implementing Equality, Ordering and Printability requires a little bit of syntax.footnote:[A nice detail is that in the Kotlin version, the String field requires a name, although the name doesn't really mean anything in this case. In Rust, I would just use a https://doc.rust-lang.org/stable/rust-by-example/custom_types/structs.html[tuple struct] in that case.]
+```rust
+#[derive(Eq, PartialEq, Ord, PartialOrd, Debug)]
+struct Email{value: String}
+// or use a tuple struct: struct Email(String)
+```
+
+
   In practice though, there's some overhead involved depending on the programming language.
 footnote:[Compared to Java, Kotlin makes it much easier to cheaply declare String wrappers via the https://kotlinlang.org/docs/reference/data-classes.html[`data class`] feature.]
-* Making
 
 == Separate types for important states
 
