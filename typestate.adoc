@@ -9,11 +9,14 @@ Using separate request/logic/DB types is common, but used to decouple the data s
 
 == Types with many different states
 
+.Jamming it all in there
+
 Example:
 ```rust
 struct RepairOrder {
     order_number: u64,
-    valid: bool,
+    valid: Option<bool>,
+    validation_errors: Vec<String>,
     in_progress: bool,
     steps_left: Vec<String>,
     blocked: bool,
@@ -29,6 +32,10 @@ This approach has many weaknesses:
 * it is technically possible for the data to be in an invalid state.
 * some fields only apply to some states
 * all this needs to be handled correctly by the application logic and tested
+
+TODO does it have any strengths?
+
+.Grouping 
 
 
 When a type has many states, you won't want to duplicate it for each state:
