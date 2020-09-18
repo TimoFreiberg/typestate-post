@@ -2,6 +2,35 @@
 shown in comparison to Kotlin
 inspired by http://cliffle.com/blog/rust-typestate/ and https://chrisdone.com/posts/path-package/.
 
+== Representing different states of data in types
+
+*TODO:* can I find any examples of this which are already commonly used?
+Using separate request/logic/DB types is common, but used to decouple the data structure, not to encode different states in the type system (although that is also a nice benefit)
+
+== Types with many different states
+
+Example:
+```rust
+struct RepairOrder {
+    order_number: u64,
+    valid: bool,
+    in_progress: bool,
+    steps_left: Vec<String>,
+    blocked: bool,
+    waiting_for_items: Vec<String>,
+    paid: bool,
+    invoice: Option<String>,
+}
+```
+
+This approach has many weaknesses:
+* it's not very obvious how many possible states there are
+** One per boolean?
+* it is technically possible for the data to be in an invalid state.
+* some fields only apply to some states
+* all this needs to be handled correctly by the application logic and tested
+
+
 When a type has many states, you won't want to duplicate it for each state:
 
 * DbUser
