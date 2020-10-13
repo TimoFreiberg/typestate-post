@@ -1,8 +1,36 @@
-use std::{thread, time::Duration};
+use std::thread;
 
 use time::NumericalStdDurationShort;
 
 use super::{Customer, Employee};
+
+pub fn process(mut order: RepairOrder) {
+    if validate(&order) {
+        order.valid = Some(true);
+    } else {
+        order.valid = Some(false);
+        order.validation_errors = validation_errors(&order);
+        store_invalid_order(order);
+        return;
+    }
+
+    assert_eq!(order.valid, Some(true));
+
+    while order.assigned_technician.is_none() {
+        match find_idle_technician() {
+            Some(it) => order.assigned_technician = Some(it),
+            None => {
+                thread::sleep(30.minutes());
+            }
+        }
+    }
+
+    assert!(order.assigned_technician.is_some());
+
+    order.in_progress = true;
+
+    // TODO add steps, add a way to block, add inventory handling (blocked for items/part of steps), add payment handling
+}
 
 #[derive(Debug)]
 pub struct RepairOrder {
@@ -54,34 +82,6 @@ fn generate_order_number() -> u64 {
     4
 }
 
-pub fn process(mut order: RepairOrder) {
-    if validate(&order) {
-        order.valid = Some(true);
-    } else {
-        order.valid = Some(false);
-        order.validation_errors = validation_errors(&order);
-        store_invalid_order(order);
-        return;
-    }
-
-    assert_eq!(order.valid, Some(true));
-
-    while let None = &order.assigned_technician {
-        match find_idle_technician() {
-            Some(it) => order.assigned_technician = Some(it),
-            None => {
-                thread::sleep(30.minutes());
-            }
-        }
-    }
-
-    assert!(order.assigned_technician.is_some());
-
-    order.in_progress = true;
-
-    // TODO add steps, add a way to block, add inventory handling (blocked for items/part of steps), add payment handling
-}
-
 fn find_idle_technician() -> Option<Employee> {
     Some(Employee)
 }
@@ -92,15 +92,15 @@ fn store_invalid_order(order: RepairOrder) {
 
 fn validation_errors(order: &RepairOrder) -> Vec<String> {
     let mut errors = Vec::new();
-    if order.customer.has_outstanding_debt() {
+    if order.customer.has_outstanding_debt {
         errors.push("Customer has outstanding debt".into());
     }
-    if order.customer.is_banned() {
+    if order.customer.is_banned {
         errors.push("Customer is banned from the shop".into());
     }
     errors
 }
 
 fn validate(order: &RepairOrder) -> bool {
-    !order.customer.has_outstanding_debt() && !order.customer.is_banned()
+    !order.customer.has_outstanding_debt && !order.customer.is_banned
 }
