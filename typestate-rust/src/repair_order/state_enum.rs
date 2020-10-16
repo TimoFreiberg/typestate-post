@@ -45,11 +45,10 @@ impl RepairOrder {
         };
     }
     fn work(&mut self) {
-        assert!(matches!(self.state, State::InProgress {..}));
         loop {
             let steps_left = match &self.state {
                 State::InProgress { steps_left, .. } => steps_left,
-                _ => unreachable!(),
+                other => panic!("Expected InProgress, got {:?}", other),
             };
             if steps_left.is_empty() {
                 return;
@@ -63,10 +62,9 @@ impl RepairOrder {
         self.state = State::WaitingForPayment { invoice };
     }
     fn await_payment(&mut self) {
-        assert!(matches!(self.state, State::WaitingForPayment {..}));
         let invoice = match &mut self.state {
             State::WaitingForPayment { invoice, .. } => invoice.clone(),
-            _ => unreachable!(),
+            other => panic!("Expected WaitingForPayment, got {:?}", other),
         };
         await_payment();
         self.state = State::Paid { invoice };

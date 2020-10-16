@@ -49,10 +49,6 @@ pub struct RepairOrder {
     pub invoice: Option<String>,
 }
 
-fn generate_order_number() -> u64 {
-    todo!()
-}
-
 fn store_invalid_order(_order: RepairOrder) {
     todo!()
 }
