@@ -10,7 +10,6 @@ fun process(order: RepairOrder) {
     } else {
         order.valid = false
         order.validationErrors = order.validationErrors()
-        storeInvalidOrder(order)
         return
     }
     assert(order.valid == true)
@@ -40,14 +39,25 @@ data class RepairOrder(
         val damageDescription: String?,
         val vehicle: String,
         val customer: Customer,
-        var valid: Boolean? = null,
-        var validationErrors: List<String> = emptyList(),
-        var assignedTechnician: Employee? = null,
-        var inProgress: Boolean = false,
-        var stepsLeft: MutableList<String> = mutableListOf(),
-        var paid: Boolean = false,
-        var invoice: String? = null,
-)
+
+) {
+    var valid: Boolean? = null
+    var validationErrors: List<String> = emptyList()
+    var assignedTechnician: Employee? = null
+    var inProgress: Boolean = false
+    var stepsLeft: MutableList<String> = mutableListOf()
+    var paid: Boolean = false
+    var invoice: String? = null
+}
+
+fun foo() {
+    RepairOrder(
+            orderNumber = 3,
+            damageDescription = null,
+            vehicle = "asd",
+            customer = Customer(false, false),
+    )
+}
 
 fun awaitPayment(): Boolean {
     TODO()

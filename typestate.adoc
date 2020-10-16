@@ -1,42 +1,188 @@
-= The Typestate pattern in Rust
-shown in comparison to Kotlin
-inspired by http://cliffle.com/blog/rust-typestate/ and https://chrisdone.com/posts/path-package/.
+= Encoding state in types
+:source-highlighter: highlightjs
+:highlightjs-languages: rust, kotlin
+
+Towards the typestate pattern, comparing Rust with Kotlin
+
+Inspired by http://cliffle.com/blog/rust-typestate/ and https://chrisdone.com/posts/path-package/
 
 == Representing different states of data in types
 
 *TODO:* can I find any examples of this which are already commonly used?
+
 Using separate request/logic/DB types is common, but used to decouple the data structure, not to encode different states in the type system (although that is also a nice benefit)
 
 == Types with many different states
 
-.Jamming it all in there
+Let's say our app manages the orders of a bike repair shop.
+There are some natural states for the order to be in, like "repair in progress" and "waiting for payment" or "paid and archived".
 
-Example:
-```rust
-struct RepairOrder {
-    order_number: u64,
-    valid: Option<bool>,
-    validation_errors: Vec<String>,
-    in_progress: bool,
-    steps_left: Vec<String>,
-    blocked: bool,
-    waiting_for_items: Vec<String>,
-    paid: bool,
-    invoice: Option<String>,
+=== Lots of simple types
+
+The most obvious implementation uses lots of booleans and stores all data of each state.
+
+.Rust
+
+A data structure like
+
+[source,rust]
+----
+pub struct RepairOrder {
+    pub order_number: u64,
+    pub damage_description: Option<String>,
+    pub vehicle: String,
+    pub customer: Customer,
+    pub valid: Option<bool>,
+    pub validation_errors: Vec<String>,
+    pub assigned_technician: Option<Employee>,
+    pub in_progress: bool,
+    pub steps_left: Vec<String>,
+    pub paid: bool,
+    pub invoice: Option<String>,
 }
-```
+----
+
+with a function like
+
+[source,rust]
+----
+pub fn process(mut order: RepairOrder) {
+    if validate(&order) {
+        order.valid = Some(true);
+    } else {
+        order.valid = Some(false);
+        order.validation_errors = validation_errors(&order);
+        store_invalid_order(order);
+        return;
+    }
+
+    assert_eq!(order.valid, Some(true));
+
+    let free_technician = find_idle_technician();
+    order.assigned_technician = Some(free_technician);
+
+    order.in_progress = true;
+
+    order.steps_left = calculate_steps();
+
+    while !order.steps_left.is_empty() {
+        work_on_next_step(&mut order);
+    }
+
+    assert!(order.steps_left.is_empty());
+
+    let invoice = send_invoice(&order);
+    order.invoice = Some(invoice);
+
+    await_payment();
+    order.paid = true;
+
+    assert!(order.paid);
+}
+----
+
+.Kotlin
+
+A data structure like
+
+[source,kotlin]
+----
+data class RepairOrder(
+        val orderNumber: Long,
+        val damageDescription: String?,
+        val vehicle: String,
+        val customer: Customer,
+) {
+    var valid: Boolean? = null
+    var validationErrors: List<String> = emptyList()
+    var assignedTechnician: Employee? = null
+    var inProgress: Boolean = false
+    var stepsLeft: MutableList<String> = mutableListOf()
+    var paid: Boolean = false
+    var invoice: String? = null
+}
+----
+
+with a function like
+
+[source,kotlin]
+----
+fun process(order: RepairOrder) {
+    if (order.isValid()) {
+        order.valid = true
+    } else {
+        order.valid = false
+        order.validationErrors = order.validationErrors()
+        return
+    }
+    assert(order.valid == true)
+
+    val technician = findIdleTechnician()
+    order.assignedTechnician = technician
+
+    order.inProgress = true
+
+    order.stepsLeft = calculateSteps(order)
+    while (order.stepsLeft.isNotEmpty()) {
+        workOnNextStep(order)
+    }
+    assert(order.stepsLeft.isEmpty())
+
+    val invoice = sendInvoice(order)
+    order.invoice = invoice
+
+    awaitPayment()
+    order.paid = true
+
+    assert(order.paid)
+}
+----
+
+.Language Comparison
+
+
+In Kotlin, mutability is specified once in the class definition, which means that every public `var` or `MutableList` can be mutated from everywhere. +
+In Rust, every public field can be mutated when given ownership or a mutable reference - but when given an immutable reference, none of these fields can be mutatedfootnote:[Except when using https://doc.rust-lang.org/book/ch15-05-interior-mutability.html[interior mutability]].
+
+In Kotlin, default values for fields can be specified at the declaration. In the above example, the fields with default values can't be set in the constructor while the other fields have to be set. +
+In Rust, there is exactly one wayfootnote:[https://doc.rust-lang.org/book/ch05-01-defining-structs.html] to initialize a struct: set every field. The idiomatic way to set default fields while still taking mandatory fields is a `RepairOrder::new` functionfootnote:[https://doc.rust-lang.org/std/keyword.struct.html#instantiation], which takes the first four arguments and sets the other arguments itself.
+
+.Pros/Cons of this approach
 
 This approach has many weaknesses:
-* it's not very obvious how many possible states there are
-** One per boolean?
-* it is technically possible for the data to be in an invalid state.
-* some fields only apply to some states
-* all this needs to be handled correctly by the application logic and tested
 
-TODO does it have any strengths?
+* it's not very obvious how many possible states there are
+** One per boolean? 2^number_of_booleans?
+* it is technically possible for the data to be in an invalid state (like `!valid && inProgress`).
+** Is it correct that `inProgress` stays `true` when the work is done and the billing process starts?
+* some fields only apply to some states (the `invoice` field only becomes relevant when the work is finished, but is always available)
+* all this needs to be handled correctly by the application logic and tested -> higher risk of overlooking bugs
+
+Pros:
+
+* If all variable combinations are actually used, this is the easiest implementation.
+* If I know what data exists, but not really what states will realistically exist, I would probably start with this kind of implementation.
+
+=== State as enums
+
+Representing states with enums would make it more obvious how many states there really are, which was not very obvious in the first version. Let's enumerate them here:
+
+|===
+|State |Associated Data |Comment
+
+|New |- |-
+|Valid |- |-
+|Invalid |validationErrors |Process will be aborted in this case
+|InProgress |assignedTechnician, stepsLeft |-
+|WorkDone |- |This state is not really required, InProgress can continue to WaitingForPayment immediately
+|WaitingForPayment |Invoice |-
+|Paid |Invoice |Order is archived now
+|===
+
+
+== DEPRECATED PART FROM HERE
 
 .Grouping 
-
 
 When a type has many states, you won't want to duplicate it for each state:
 
