@@ -3,4 +3,8 @@ data class Customer(
         val isBanned: Boolean,
 )
 
-data class Employee
+class Employee
+
+fun findIdleTechnician(): Employee {
+    TODO()
+}

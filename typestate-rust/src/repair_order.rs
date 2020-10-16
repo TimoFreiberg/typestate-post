@@ -1,4 +1,5 @@
-pub mod kitchen_sink;
+pub mod single_variables;
+pub mod state_enum;
 
 // TODO add data
 #[derive(Debug)]
@@ -7,5 +8,13 @@ pub struct Customer {
     is_banned: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Employee;
+
+fn find_idle_technician() -> Employee {
+    todo!()
+}
+
+fn calculate_steps() -> Vec<String> {
+    todo!()
+}
