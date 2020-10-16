@@ -22,6 +22,24 @@ fun process(order: RepairOrder) {
     order.awaitPayment()
 }
 
+data class RepairOrder(
+        val orderNumber: Long,
+        val damageDescription: String?,
+        val vehicle: String,
+        val customer: Customer,
+        var state: State = State.New,
+)
+
+sealed class State {
+    object New : State()
+    object Valid : State()
+    class Invalid(val validationErrors: List<String>) : State()
+    class InProgress(val assignedTechnician: Employee, val stepsLeft: MutableList<String>) : State()
+    object WorkDone : State()
+    class WaitingForPayment(val invoice: String) : State()
+    class Paid(val invoice: String) : State()
+}
+
 private fun RepairOrder.validate() {
     val isValid = isValid()
     state = if (isValid) {
@@ -41,11 +59,10 @@ private fun RepairOrder.work() {
     assert(state is State.InProgress)
 
     while ((state as State.InProgress).stepsLeft.isNotEmpty()) {
-        workOnNextStep(this)
+        this.workOnNextStep()
     }
     state = State.WorkDone
 }
-
 
 fun RepairOrder.sendInvoice() {
     val invoice = getInvoice()
@@ -61,30 +78,11 @@ private fun RepairOrder.awaitPayment() {
     state = State.Paid(invoice)
 }
 
-
-data class RepairOrder(
-        val orderNumber: Long,
-        val damageDescription: String?,
-        val vehicle: String,
-        val customer: Customer,
-        var state: State = State.New,
-)
-
-sealed class State {
-    object New : State()
-    object Valid : State()
-    class Invalid(val validationErrors: List<String>) : State()
-    class InProgress(val assignedTechnician: Employee, val stepsLeft: MutableList<String>) : State()
-    object WorkDone : State()
-    class WaitingForPayment(val invoice: String) : State()
-    class Paid(val invoice: String) : State()
-}
-
-private fun calculateSteps(): MutableList<String> {
+private fun RepairOrder.workOnNextStep() {
     TODO()
 }
 
-private fun workOnNextStep(repairOrder: RepairOrder) {
+private fun calculateSteps(): MutableList<String> {
     TODO()
 }
 

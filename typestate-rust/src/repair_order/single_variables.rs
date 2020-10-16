@@ -49,25 +49,6 @@ pub struct RepairOrder {
     pub invoice: Option<String>,
 }
 
-impl RepairOrder {
-    pub fn new(customer: Customer, damage_description: Option<String>, vehicle: String) -> Self {
-        let order_number = generate_order_number();
-        RepairOrder {
-            order_number,
-            damage_description,
-            vehicle,
-            customer,
-            valid: None,
-            validation_errors: Vec::new(),
-            assigned_technician: None,
-            in_progress: false,
-            steps_left: Vec::new(),
-            paid: false,
-            invoice: None,
-        }
-    }
-}
-
 fn generate_order_number() -> u64 {
     todo!()
 }
