@@ -2,6 +2,7 @@ package repairorder.singlevariables
 
 import Customer
 import Employee
+import calculateSteps
 import findIdleTechnician
 
 fun process(order: RepairOrder) {
@@ -21,7 +22,7 @@ fun process(order: RepairOrder) {
 
     order.stepsLeft = calculateSteps(order)
     while (order.stepsLeft.isNotEmpty()) {
-        workOnNextStep(order)
+        order.workOnNextStep()
     }
     assert(order.stepsLeft.isEmpty())
 
@@ -39,7 +40,6 @@ data class RepairOrder(
         val damageDescription: String?,
         val vehicle: String,
         val customer: Customer,
-
 ) {
     var valid: Boolean? = null
     var validationErrors: List<String> = emptyList()
@@ -50,31 +50,6 @@ data class RepairOrder(
     var invoice: String? = null
 }
 
-fun foo() {
-    RepairOrder(
-            orderNumber = 3,
-            damageDescription = null,
-            vehicle = "asd",
-            customer = Customer(false, false),
-    )
-}
-
-fun awaitPayment(): Boolean {
-    TODO()
-}
-
-fun sendInvoice(order: RepairOrder): String {
-    TODO()
-}
-
-fun workOnNextStep(order: RepairOrder) {
-    TODO()
-}
-
-fun calculateSteps(order: RepairOrder): MutableList<String> {
-    TODO()
-}
-
 private fun RepairOrder.isValid(): Boolean {
     TODO()
 }
@@ -83,7 +58,14 @@ fun RepairOrder.validationErrors(): List<String> {
     TODO()
 }
 
-fun storeInvalidOrder(order: RepairOrder) {
+fun RepairOrder.workOnNextStep() {
     TODO()
 }
 
+fun sendInvoice(order: RepairOrder): String {
+    TODO()
+}
+
+fun awaitPayment(): Boolean {
+    TODO()
+}

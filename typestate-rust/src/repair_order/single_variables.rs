@@ -1,12 +1,11 @@
 use super::{calculate_steps, find_idle_technician, Customer, Employee};
 
 pub fn process(mut order: RepairOrder) {
-    if validate(&order) {
+    if order.is_valid() {
         order.valid = Some(true);
     } else {
         order.valid = Some(false);
-        order.validation_errors = validation_errors(&order);
-        store_invalid_order(order);
+        order.validation_errors = order.validation_errors();
         return;
     }
 
@@ -20,7 +19,7 @@ pub fn process(mut order: RepairOrder) {
     order.steps_left = calculate_steps();
 
     while !order.steps_left.is_empty() {
-        work_on_next_step(&mut order);
+        order.work_on_next_step();
     }
 
     assert!(order.steps_left.is_empty());
@@ -49,26 +48,42 @@ pub struct RepairOrder {
     pub invoice: Option<String>,
 }
 
-fn store_invalid_order(_order: RepairOrder) {
-    todo!()
+impl RepairOrder {
+    pub fn new(
+        order_number: u64,
+        damage_description: Option<String>,
+        vehicle: String,
+        customer: Customer,
+    ) -> Self {
+        Self {
+            order_number,
+            damage_description,
+            vehicle,
+            customer,
+            valid: None,
+            validation_errors: Vec::new(),
+            assigned_technician: None,
+            in_progress: false,
+            steps_left: Vec::new(),
+            paid: false,
+            invoice: None,
+        }
+    }
+    fn is_valid(&self) -> bool {
+        todo!()
+    }
+    fn validation_errors(&self) -> Vec<String> {
+        todo!()
+    }
+    fn work_on_next_step(&mut self) {
+        todo!()
+    }
 }
 
-fn validation_errors(_order: &RepairOrder) -> Vec<String> {
-    todo!()
-}
-
-fn validate(_order: &RepairOrder) -> bool {
-    todo!()
-}
-
-fn work_on_next_step(_order: &mut RepairOrder) {
+fn send_invoice(_order: &RepairOrder) -> String {
     todo!()
 }
 
 fn await_payment() -> bool {
-    todo!()
-}
-
-fn send_invoice(_order: &RepairOrder) -> String {
     todo!()
 }
