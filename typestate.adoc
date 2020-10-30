@@ -179,6 +179,88 @@ Representing states with enums would make it more obvious how many states there 
 |Paid |Invoice |Order is archived now
 |===
 
+.Rust
+
+A data structure like the following can encode the state:
+
+[source,rust]
+---
+pub struct RepairOrder {
+    pub order_number: u64,
+    pub damage_description: Option<String>,
+    pub vehicle: String,
+    pub customer: Customer,
+    pub state: OrderState
+    pub validation_errors: Vec<String>,
+    pub assigned_technician: Option<Employee>,
+    pub steps_left: Vec<String>,
+    pub invoice: Option<String>,
+}
+pub enum OrderState {
+    New, Valid, Invalid, InProgress, WorkDone, WaitingForPayment, Paid
+}
+---
+
+and, using C-style enums, would be directly translatable to Java and Kotlin.
+
+But we would like to also solve the issue that several fields are only relevant in some states.
+To do this, we can move those fields from `RepairOrder` into the relevant states.
+
+[source,rust]
+---
+pub struct RepairOrder {
+    pub order_number: u64,
+    pub damage_description: Option<String>,
+    pub vehicle: String,
+    pub customer: Customer,
+    pub state: OrderState
+}
+pub enum OrderState {
+    New,
+    Valid,
+    Invalid { validation_errors: Vec<String> },
+    InProgress {
+        assigned_technician: Employee,
+        steps_left: Vec<String>
+    },
+    WorkDone,
+    WaitingForPayment { invoice: String },
+    Paid { invoice: String }
+}
+---
+
+Ah, looks cleaner already.
+
+The same thing can be done in Kotlin with https://kotlinlang.org/docs/reference/sealed-classes.html[sealed classes]:
+
+[source,kotlin]
+---
+data class RepairOrder(
+        val orderNumber: Long,
+        val damageDescription: String?,
+        val vehicle: String,
+        val customer: Customer,
+        var state: State = State.New,
+)
+sealed class State {
+    object New : State()
+    object Valid : State()
+    class Invalid(val validationErrors: List<String>) : State()
+    class InProgress(val assignedTechnician: Employee, val stepsLeft: MutableList<String>) : State()
+    object WorkDone : State()
+    class WaitingForPayment(val invoice: String) : State()
+    class Paid(val invoice: String) : State()
+}
+---
+
+The function implementation doesn't change a whole lot. Many steps become more descriptive, unpacking the state-specific fields becomes a bit more verbose though.
+TODO do I want to show the implementations here?
+
+.Language Comparison
+
+Fieldless subtypes of a sealed class in Kotlin are more verbose than fieldless enum values in Rust.
+
+Casting/handling unknown instance type is easier in Kotlin than having methods that assume one enum value being set in Rust. TODO
 
 == DEPRECATED PART FROM HERE
 
