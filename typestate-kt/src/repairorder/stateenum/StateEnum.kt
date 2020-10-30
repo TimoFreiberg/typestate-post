@@ -33,11 +33,11 @@ data class RepairOrder(
 sealed class State {
     object New : State()
     object Valid : State()
-    class Invalid(val validationErrors: List<String>) : State()
-    class InProgress(val assignedTechnician: Employee, val stepsLeft: MutableList<String>) : State()
+    data class Invalid(val validationErrors: List<String>) : State()
+    data class InProgress(val assignedTechnician: Employee, val stepsLeft: MutableList<String>) : State()
     object WorkDone : State()
-    class WaitingForPayment(val invoice: String) : State()
-    class Paid(val invoice: String) : State()
+    data class WaitingForPayment(val invoice: String) : State()
+    data class Paid(val invoice: String) : State()
 }
 
 private fun RepairOrder.validate() {

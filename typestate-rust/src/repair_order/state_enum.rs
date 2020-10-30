@@ -27,6 +27,31 @@ pub struct RepairOrder {
     pub state: State,
 }
 
+pub struct TypeStateRepairOrder<T> {
+    // common types
+    state: T
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub enum State {
+    New,
+    Valid,
+    Invalid {
+        validation_errors: Vec<String>,
+    },
+    InProgress {
+        assigned_technician: Employee,
+        steps_left: Vec<String>,
+    },
+    WorkDone,
+    WaitingForPayment {
+        invoice: String,
+    },
+    Paid {
+        invoice: String,
+    },
+}
+
 impl RepairOrder {
     fn validate(&mut self) {
         let is_valid = is_valid();
@@ -80,26 +105,6 @@ fn await_payment() {
 
 fn get_invoice() -> String {
     todo!()
-}
-
-#[derive(Debug, Eq, PartialEq)]
-pub enum State {
-    New,
-    Valid,
-    Invalid {
-        validation_errors: Vec<String>,
-    },
-    InProgress {
-        assigned_technician: Employee,
-        steps_left: Vec<String>,
-    },
-    WorkDone,
-    WaitingForPayment {
-        invoice: String,
-    },
-    Paid {
-        invoice: String,
-    },
 }
 
 fn get_validation_errors() -> Vec<String> {

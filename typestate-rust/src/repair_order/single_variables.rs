@@ -7,6 +7,7 @@ pub fn process(mut order: RepairOrder) {
         order.valid = Some(false);
         order.validation_errors = order.validation_errors();
         return;
+    }
 
     assert_eq!(order.valid, Some(true));
 
