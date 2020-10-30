@@ -7,7 +7,6 @@ pub fn process(mut order: RepairOrder) {
         order.valid = Some(false);
         order.validation_errors = order.validation_errors();
         return;
-    }
 
     assert_eq!(order.valid, Some(true));
 
@@ -17,11 +16,9 @@ pub fn process(mut order: RepairOrder) {
     order.in_progress = true;
 
     order.steps_left = calculate_steps();
-
     while !order.steps_left.is_empty() {
         order.work_on_next_step();
     }
-
     assert!(order.steps_left.is_empty());
 
     let invoice = send_invoice(&order);
