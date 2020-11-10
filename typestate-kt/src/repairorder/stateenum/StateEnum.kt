@@ -55,7 +55,7 @@ private fun RepairOrder.startProgress(technician: Employee, stepsLeft: MutableLi
     state = State.InProgress(technician, stepsLeft)
 }
 
-private fun RepairOrder.work() {
+internal fun RepairOrder.work() {
     assert(state is State.InProgress)
 
     while ((state as State.InProgress).stepsLeft.isNotEmpty()) {
@@ -79,7 +79,8 @@ private fun RepairOrder.awaitPayment() {
 }
 
 private fun RepairOrder.workOnNextStep() {
-    TODO()
+    state as State.InProgress
+    // TODO continue here
 }
 
 private fun calculateSteps(): MutableList<String> {

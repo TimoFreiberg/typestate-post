@@ -179,12 +179,12 @@ Representing states with enums would make it more obvious how many states there 
 |Paid |Invoice |Order is archived now
 |===
 
-.Rust
+==== Data Structures
 
 A data structure like the following can encode the state:
 
 [source,rust]
----
+----
 pub struct RepairOrder {
     pub order_number: u64,
     pub damage_description: Option<String>,
@@ -199,7 +199,7 @@ pub struct RepairOrder {
 pub enum OrderState {
     New, Valid, Invalid, InProgress, WorkDone, WaitingForPayment, Paid
 }
----
+----
 
 and, using C-style enums, would be directly translatable to Java and Kotlin.
 
@@ -207,7 +207,7 @@ But we would like to also solve the issue that several fields are only relevant 
 To do this, we can move those fields from `RepairOrder` into the relevant states.
 
 [source,rust]
----
+----
 pub struct RepairOrder {
     pub order_number: u64,
     pub damage_description: Option<String>,
@@ -227,14 +227,14 @@ pub enum OrderState {
     WaitingForPayment { invoice: String },
     Paid { invoice: String }
 }
----
+----
 
 Ah, looks cleaner already.
 
 The same thing can be done in Kotlin with https://kotlinlang.org/docs/reference/sealed-classes.html[sealed classes]:
 
 [source,kotlin]
----
+----
 data class RepairOrder(
         val orderNumber: Long,
         val damageDescription: String?,
@@ -251,10 +251,8 @@ sealed class State {
     class WaitingForPayment(val invoice: String) : State()
     class Paid(val invoice: String) : State()
 }
----
+----
 
-The function implementation doesn't change a whole lot. Many steps become more descriptive, unpacking the state-specific fields becomes a bit more verbose though.
-TODO do I want to show the implementations here?
 
 .Language Comparison
 
@@ -262,131 +260,83 @@ Fieldless subtypes of a sealed class in Kotlin are more verbose than fieldless e
 
 Casting/handling unknown instance type is easier in Kotlin than having methods that assume one enum value being set in Rust. TODO
 
-== DEPRECATED PART FROM HERE
+==== Functions
 
-.Grouping 
+The function implementation changes a little, as shown by the following examples:
 
-When a type has many states, you won't want to duplicate it for each state:
+.Validate Function
 
-* DbUser
-* NewUser
-* ValidatedNewUser
-* MergedUser
-* can you think of more?
-
-if only to not write the same user fields n times.
-One way to deduplicate this would be to keep all common fields in one type and embed this type in all the variants:
-
-```rust
-struct CommonUserFields {
-    name: Option<UserName>,
-    birthday: Option<Birthday>,
-    email: Email,
-    preferences: Preferences,
-    ...
-}
-
-struct DbUser {
-    id: RowId,
-    fields: CommonUserFields,
-}
-
-struct NewUser {
-    referral_token: Option<ReferralToken>,
-    fields: CommonUserFields,
-}
-
-struct ValidatedNewUser {
-    fields: CommonUserFields,
-}
-```
-
-This is still a bit verbose, but less so than duplicating all the fields.
-
-Another way to express this is often called the typestate pattern.
-
-== Different user states using the typestate pattern
-
-```rust
-struct User<S> {
-    name: Option<UserName,
-    birthday: Option<Birthday>,
-    email: Email,
-    preferences: Preferences,
-    state: S,
-}
-
-struct Db {
-    id: RowId
-}
-// the same type names can be used via type aliases:
-type DbUser = User<Db>;
-// or not
-fn storeUser(User<Validated>) -> Result<User<Db>, DbError> { todo!() }
-
-struct New(Option<ReferralToken);
-type NewUser = User<New>;
-fn create_user(new_user: NewUser) -> Result<DbUser, CreateUserError> { todo!() }
-```
-
-== An example of the typestate pattern
-
-It basically consists of expressing some state of the type with a type variable.
-Compare:
-
-```rust
-enum TrafficLightColor {
-    Red,
-    Yellow,
-    Green,
-}
-struct TrafficLights {
-    color: TrafficLightColor,
-}
-impl TrafficLights {
-    fn color(&self) -> TrafficLightColor { &self.color }
-    fn is_red(&self) -> bool { self.color == TrafficLightColor::Red }
-    fn is_yellow(&self) -> bool { self.color == TrafficLightColor::Yellow }
-    fn is_green(&self) -> bool { self.color == TrafficLightColor::Green }
-    fn turn_red(&mut self) {
-        if self.is_yellow() {
-            self.color = TrafficLightColor::Red
+[source,rust]
+----
+impl RepairOrder {
+    fn validate(&mut self) {
+        self.state = if is_valid() {
+            State::Valid
         } else {
-            panic!("this should really return a Result<(), SomeError>!")
+            let validation_errors = get_validation_errors();
+            State::Invalid { validation_errors }
+        };
+    }
+    //...
+}
+----
+
+[source,kotlin]
+----
+private fun RepairOrder.validate() {
+    state = if (isValid()) {
+        State.Valid
+    } else {
+        val validationErrors = getValidationErrors()
+        State.Invalid(validationErrors)
+    }
+}
+----
+
+These two only get more descriptive compared to the initial version, which is helped by the fact that they don't validate the previous state.
+
+.Work Function
+
+[source,rust]
+----
+//impl RepairOrder {
+    fn work(&mut self) {
+        while match &self.state {
+            State::InProgress { steps_left, .. } => !steps_left.is_empty(),
+            other => panic!("Expected InProgress, but was {:?}", other),
+        } {
+            self.work_on_next_step()
         }
     }
-    // turn_yellow and turn_green is left as an exercise to the reader
-}
-```
+//}
+----
 
-with
+[source,kotlin]
+----
+private fun RepairOrder.work() {
+    assert(state is State.InProgress)
 
-```rust
-// the colors are not namespaced here.
-// if that's important, the names of the structs can be changed
-// or the struct definitions can be moved into a `mod traffic_light_colors {}`
-struct Red;
-struct Yellow;
-struct Green;
-struct TrafficLights<C> {
-    color: C,
-}
-impl TrafficLights<Yellow> {
-    fn turn_red(self) -> TrafficLights<Red> {
-        Self { color: Red }
+    while ((state as State.InProgress).stepsLeft.isNotEmpty()) {
+        this.workOnNextStep()
     }
+    state = State.WorkDone
 }
-```
+----
 
-some differences in the API are necessary here.
-It's no longer possible to mutate a yellow traffic light into a red traffic light, so the mutable API is no longer possible.
-The first TrafficLights version could have also offered the functional API `fn turn_red(self) -> Self`, so here the version that uses the typestate pattern has less available options.
-On the other hand, the turn_red function is now infallible as it can only be called with traffic lights that are in the correct state.
+Here, the current state actually has to be `InProgress` for the function to work, and handling that is a bit more complex - especially on the rust side!
 
-Another difference is that checking the current color of a traffic light whose state is unknown looks completely different.
-In the initial version, writing `fn is_red<T>(tl: &TrafficLights<T>) -> bool` is actually not possible is it would require runtime reflection, which doesn't exist in rust (FIXME is this a correct description of the problem?)
+.Language Comparison
 
-cool bear style aside: what would the language need to offer to implement `fn is_red<T>(color: &T) -> bool`?
+Rust doesn't have the `as`-operator (which makes sense as it doesn't have inheritance), so I have to handle the possible cases a bit more manually.
+On the other hand, in Rust it would not compile to extract the `steps_left` variable at the top of the function like this:
 
-If I need to handle values in an unknown state but still want to use the typestate pattern, some additional machinery is required.
-TODO do I want to show this?
+[source,rust]
+----
+let steps_left = match &mut self.state { ... };
+while !steps_left.is_empty { ... }
+----
+
+which I might intuitively do in Kotlin.
+I didn't even notice the bug before Rust failed to compile - the `work_on_next_step` function is free to mutate the `state` field which the `work` function doesn't expect.
+In Kotlin, this wouldn't be a disaster (maybe an endless loop), but in Rust it would break memory safety.
+

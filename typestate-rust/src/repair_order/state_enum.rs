@@ -29,7 +29,7 @@ pub struct RepairOrder {
 
 pub struct TypeStateRepairOrder<T> {
     // common types
-    state: T
+    state: T,
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -70,16 +70,11 @@ impl RepairOrder {
         };
     }
     fn work(&mut self) {
-        loop {
-            let steps_left = match &self.state {
-                State::InProgress { steps_left, .. } => steps_left,
-                other => panic!("Expected InProgress, got {:?}", other),
-            };
-            if steps_left.is_empty() {
-                return;
-            }
-
-            self.work_on_next_step();
+        while match &self.state {
+            State::InProgress { steps_left, .. } => !steps_left.is_empty(),
+            other => panic!("Expected InProgress, but was {:?}", other),
+        } {
+            self.work_on_next_step()
         }
     }
     fn send_invoice(&mut self) {
@@ -87,7 +82,7 @@ impl RepairOrder {
         self.state = State::WaitingForPayment { invoice };
     }
     fn await_payment(&mut self) {
-        let invoice = match &mut self.state {
+        let invoice = match &self.state {
             State::WaitingForPayment { invoice, .. } => invoice.clone(),
             other => panic!("Expected WaitingForPayment, got {:?}", other),
         };
