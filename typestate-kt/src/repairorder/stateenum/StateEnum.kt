@@ -3,6 +3,8 @@ package repairorder.stateenum
 import Customer
 import Employee
 import findIdleTechnician
+import repairorder.typestate.RepairOrder
+import repairorder.typestate.State
 
 fun process(order: RepairOrder) {
     assert(order.state == State.New)
@@ -16,9 +18,9 @@ fun process(order: RepairOrder) {
     val stepsLeft = calculateSteps()
     order.startProgress(technician, stepsLeft)
 
-    order.work()
+    repairorder.typestate.work()
 
-    order.sendInvoice()
+    repairorder.typestate.sendInvoice()
     order.awaitPayment()
 }
 
