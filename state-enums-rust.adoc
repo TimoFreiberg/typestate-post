@@ -1,10 +1,6 @@
-= Encoding state in types
+= Towards the Typestate Pattern in Rust
 :source-highlighter: highlightjs
 :highlightjs-languages: rust
-
-Towards the typestate pattern shown in Rust
-
-Inspired by http://cliffle.com/blog/rust-typestate/ and https://chrisdone.com/posts/path-package/
 
 == Representing different states of data in types
 
@@ -250,4 +246,11 @@ This is in fact a close approximation of what I'm going to show in the next blog
 == Only in Rust? (Or Haskell?)
 
 While I have mostly heard of the typestate pattern in the Rust and Haskell community, the examples in this post are easily translatable into Kotlin, which I will showcase in a future blog post.
+
+== Further reading
+
+A more in-depth look at the way Rust's type system helps representing state: http://cliffle.com/blog/rust-typestate/
+
+The motivation behind an unusually type-safe path handling library, written in Haskell (which blew my mind at the time): https://chrisdone.com/posts/path-package/
+
 
