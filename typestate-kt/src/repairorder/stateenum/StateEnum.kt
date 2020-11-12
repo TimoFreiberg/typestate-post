@@ -3,8 +3,6 @@ package repairorder.stateenum
 import Customer
 import Employee
 import findIdleTechnician
-import repairorder.typestate.RepairOrder
-import repairorder.typestate.State
 
 fun process(order: RepairOrder) {
     assert(order.state == State.New)
@@ -18,9 +16,9 @@ fun process(order: RepairOrder) {
     val stepsLeft = calculateSteps()
     order.startProgress(technician, stepsLeft)
 
-    repairorder.typestate.work()
+    order.work()
 
-    repairorder.typestate.sendInvoice()
+    order.sendInvoice()
     order.awaitPayment()
 }
 
@@ -60,7 +58,8 @@ private fun RepairOrder.startProgress(technician: Employee, stepsLeft: MutableLi
 internal fun RepairOrder.work() {
     assert(state is State.InProgress)
 
-    while ((state as State.InProgress).stepsLeft.isNotEmpty()) {
+    val stepsLeft = (state as State.InProgress).stepsLeft
+    while (stepsLeft.isNotEmpty()) {
         this.workOnNextStep()
     }
     state = State.WorkDone
@@ -81,8 +80,7 @@ private fun RepairOrder.awaitPayment() {
 }
 
 private fun RepairOrder.workOnNextStep() {
-    state as State.InProgress
-    // TODO continue here
+    TODO()
 }
 
 private fun calculateSteps(): MutableList<String> {

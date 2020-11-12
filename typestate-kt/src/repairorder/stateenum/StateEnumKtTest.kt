@@ -3,8 +3,6 @@ package repairorder.stateenum
 import Customer
 import Employee
 import org.junit.jupiter.api.Test
-import repairorder.typestate.RepairOrder
-import repairorder.typestate.State
 
 class StateEnumKtTest {
     @Test
@@ -19,6 +17,6 @@ class StateEnumKtTest {
                 ),
                 state = State.InProgress(Employee(), mutableListOf("A", "B"))
         )
-        repairorder.typestate.work()
+        repairOrder.work()
     }
 }
