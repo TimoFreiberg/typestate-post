@@ -1,0 +1,253 @@
+= Encoding state in types
+:source-highlighter: highlightjs
+:highlightjs-languages: rust
+
+Towards the typestate pattern shown in Rust
+
+Inspired by http://cliffle.com/blog/rust-typestate/ and https://chrisdone.com/posts/path-package/
+
+== Representing different states of data in types
+
+*TODO:* 
+can I find any examples of this which are already commonly used? I would like to show commonly known designs that are close but not exactly the same.
+
+Using separate request/logic/DB types is common, but used to decouple the data structure, not to encode different states in the type system (although that is also a nice benefit)
+
+== An example type with many different states
+
+Let's say our app manages the orders of a bike repair shop.
+There are some natural states for the order to be in, like "repair in progress", "waiting for payment" or "paid and archived".
+
+=== 1: Lots of simple types
+
+The most obvious implementation uses lots of booleans and stores all data of each state.
+
+So the data structure could look loke this:
+
+[source,rust]
+----
+struct RepairOrder {
+    order_number: u64,
+    damage_description: Option<String>,
+    vehicle: String,
+    customer: Customer,
+    valid: Option<bool>,
+    validation_errors: Vec<String>,
+    assigned_technician: Option<Employee>,
+    in_progress: bool,
+    steps_left: Vec<String>,
+    paid: bool,
+    invoice: Option<String>,
+}
+----
+
+and the function that implements the main workflow could look like this:
+
+[source,rust]
+----
+fn process(mut order: RepairOrder) {
+    if validate(&order) {
+        order.valid = Some(true);
+    } else {
+        order.valid = Some(false);
+        order.validation_errors = validation_errors(&order);
+        store_invalid_order(order);
+        return;
+    }
+
+    assert_eq!(order.valid, Some(true));
+
+    let free_technician = find_idle_technician();
+    order.assigned_technician = Some(free_technician);
+
+    order.in_progress = true;
+
+    order.steps_left = calculate_steps();
+
+    while !order.steps_left.is_empty() {
+        work_on_next_step(&mut order);
+    }
+
+    assert!(order.steps_left.is_empty());
+
+    let invoice = send_invoice(&order);
+    order.invoice = Some(invoice);
+
+    await_payment();
+    order.paid = true;
+
+    assert!(order.paid);
+}
+----
+
+While all actual work is done in the other functions that are referenced from the `process` function, all state transitions are visible.
+
+.Cons
+
+This approach has many weaknesses (it is the 'before' in this 'before/after', after all):
+
+* it's not very obvious how many possible states there are
+** One per boolean? 2^number_of_booleans?
+* it is technically possible for the data to be in an invalid state
+** like `!valid && inProgress`, is that legal?
+** And for the edge case hunters: Is it correct that `inProgress` stays `true` when the work is done and the billing process starts?
+* some fields only apply to some states (the `invoice` field only becomes relevant when the work is finished, but is always available)
+
+So working with this grab-bag of variables probably has a higher chance of overlooking bugs.
+
+.Pros
+
+* If all variable combinations are actually used, this is the easiest implementation.
+* If I had to start writing code only knowing what data exists, but not really what states will realistically exist, I might start with this kind of implementation and hope to refactor it in the future.
+
+=== 2: State as enums
+
+Representing states with enums would make it more obvious how many states there really are, which was not very obvious in the first version.
+Let's pretend we got that info after months of hard work and enumerate them here:
+
+|===
+|State |Associated Data |Comment
+
+|New |- |-
+|Valid |- |-
+|Invalid |validationErrors |Process will be aborted in this case
+|InProgress |assignedTechnician, stepsLeft |-
+|WorkDone |- |This state is not really required, InProgress can continue to WaitingForPayment immediately
+|WaitingForPayment |Invoice |-
+|Paid |Invoice |Order is archived now
+|===
+
+==== Data Structures
+
+A data structure like the following can encode the state:
+
+[source,rust]
+----
+pub struct RepairOrder {
+    pub order_number: u64,
+    pub damage_description: Option<String>,
+    pub vehicle: String,
+    pub customer: Customer,
+    pub state: OrderState
+    pub validation_errors: Vec<String>,
+    pub assigned_technician: Option<Employee>,
+    pub steps_left: Vec<String>,
+    pub invoice: Option<String>,
+}
+pub enum OrderState {
+    New, Valid, Invalid, InProgress, WorkDone, WaitingForPayment, Paid
+}
+----
+
+and, using C-style enums, would be directly translatable to Java and Kotlin.
+
+But we would like to also solve the issue that several fields are only relevant in some states.
+To do this, we can move those fields from `RepairOrder` into the relevant states using ~algebraic data types~
+
+[source,rust]
+----
+pub struct RepairOrder {
+    pub order_number: u64,
+    pub damage_description: Option<String>,
+    pub vehicle: String,
+    pub customer: Customer,
+    pub state: OrderState
+}
+pub enum OrderState {
+    New,
+    Valid,
+    Invalid { validation_errors: Vec<String> },
+    InProgress {
+        assigned_technician: Employee,
+        steps_left: Vec<String>
+    },
+    WorkDone,
+    WaitingForPayment { invoice: String },
+    Paid { invoice: String }
+}
+----
+
+Ah, looks cleaner already.
+
+==== Functions
+
+The function implementations change a little.
+We're gonna avoid a big block of procedure this time and will have moved each step into a method.
+We're also only going to look at two functions, the entire example code is linked at the end.
+
+.Validate Function
+
+[source,rust]
+----
+impl RepairOrder {
+    //...
+    fn validate(&mut self) {
+        self.state = if is_valid() {
+            State::Valid
+        } else {
+            let validation_errors = get_validation_errors();
+            State::Invalid { validation_errors }
+        };
+    }
+    //...
+}
+----
+
+This one only gets more descriptive compared to the initial version, which is helped by the fact that it doesn't validate the initial state.
+
+.Work Function
+
+[source,rust]
+----
+    //...
+    fn work(&mut self) {
+        while match &self.state {
+            State::InProgress { steps_left, .. } => !steps_left.is_empty(),
+            other => panic!("Expected InProgress, but was {:?}", other),
+        } {
+            self.work_on_next_step()
+        }
+    }
+    //...
+----
+
+Here, the current state actually has to be `InProgress` for the function to work, and handling that is a bit more complex.
+
+The weird `while match` part is a `while` loop with a `match` block that returns a `bool` as its boolean argument.
+The whole match expression could be extracted into a separate function (I just chose not to).
+
+But the `steps_left` variable from inside the `state` variable can't just be extracted into a variable above the loop.
+That's because it would mean that part of `self` (namely `state`) is referenced (or borrowed) while `self.work_on_next_step()` is free to mutate `self` (namely `state`)!
+
+And because Rust, due to its lack of a GC, immediately frees unused memory, changing `state` in `work_on_next_step` and then, for the next loop, checking the emptiness of the `steps_left` inside the old `state` would be a use after free, which is thankfully forbidden.
+
+But even if it wasn't forbidden, like in a garbage-collected language, this change could lead to endless loops, which are still frowned upon.
+I'll show this in the upcoming post about translating this into Kotlin.
+
+
+.Pros
+
+* It's immediately visible how many states there are.
+* Only one state can be active at once
+* States don't have access to data of other states.
+* We can now make fields like `assigned_technician` mandatory, which wasn't possible in the previous approach!
+
+.Con
+
+* Accessing the expected state is a bit cumbersome.
+
+If this seems like a drawback of adding type explicitness, let me make the case for going even further
+
+== The case for going even further: The typestate pattern
+
+This algorithm was contrived to be a linear state machine, so the human reader can always see what the expected state at each line of the program will be.
+Any extra effort to verify that the expected state is in fact stored in the `state` field immediately becomes boilerplate to be minimized via helper functions or macros.
+
+So the power of the state variable to be changed to any of its variants at any time the parent is mutated is actually not needed here.
+The design would be just as correct, and even more specific, if `validate` accepted a `NewRepairOrder` and returned a `Result<ValidRepairOrder, InvalidRepairOrder>` (you can probably imagine what those types would look like).
+This is in fact a close approximation of what I'm going to show in the next blog post.
+
+== Only in Rust? (Or Haskell?)
+
+While I have mostly heard of the typestate pattern in the Rust and Haskell community, the examples in this post are easily translatable into Kotlin, which I will showcase in a future blog post.
+
