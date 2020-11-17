@@ -1,10 +1,8 @@
 = Encoding state in types
 :source-highlighter: highlightjs
-:highlightjs-languages: rust, kotlin
+:highlightjs-languages: rust
 
-Towards the typestate pattern, comparing Rust with Kotlin
-
-Inspired by http://cliffle.com/blog/rust-typestate/ and https://chrisdone.com/posts/path-package/
+*TODO:* paragraph with motivation
 
 == Representing different states of data in types
 
