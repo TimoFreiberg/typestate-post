@@ -27,11 +27,6 @@ pub struct RepairOrder {
     pub state: State,
 }
 
-pub struct TypeStateRepairOrder<T> {
-    // common types
-    state: T,
-}
-
 #[derive(Debug, Eq, PartialEq)]
 pub enum State {
     New,
@@ -70,9 +65,12 @@ impl RepairOrder {
         };
     }
     fn work(&mut self) {
-        while match &self.state {
-            State::InProgress { steps_left, .. } => !steps_left.is_empty(),
-            other => panic!("Expected InProgress, but was {:?}", other),
+        while {
+            let steps_left = match &self.state {
+                State::InProgress { steps_left, .. } => steps_left,
+                other => panic!("Expected InProgress, but was {:?}", other),
+            };
+            !steps_left.is_empty()
         } {
             self.work_on_next_step()
         }
