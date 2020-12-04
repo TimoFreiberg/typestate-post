@@ -5,7 +5,7 @@
 Types are usually used to distinguish different data, or the same data, but in a different representation.
 But when data can be in several different states, it can be advantageous to give each state its own type.
 
-Let's take a look at an artificial example, introduce types for each state and see how this changes the code.
+Let's take a look at an representative example, introduce types for each state and see how this changes the code.
 
 We'll also take the opportunity to compare Rust with Kotlin.
 This post will show a Rust implementation and a future post will compare it with a Kotlin implementation.
@@ -18,7 +18,7 @@ The Order can be in states like "repair in progress", "waiting for payment" or "
 
 A very straightforward implementation could just distinguish between states using booleans and store all data that is ever needed in the same data type.
 
-.1: Lots of simple types
+== 1: Lots of simple types
 
 This is the data type:
 
@@ -80,7 +80,7 @@ fn process(mut order: RepairOrder) {
 
 While all actual work is done in the other functions that are referenced from the main `process` function, all state transitions are visible.
 
-.Cons
+=== Cons
 
 This approach has many weaknesses (it is the 'before' in this 'before/after', after all):
 
@@ -94,12 +94,12 @@ This approach has many weaknesses (it is the 'before' in this 'before/after', af
 
 So when working with this grab-bag of variables there's probably a higher chance of overlooking bugs.
 
-.Pros
+=== Pros
 
 * If all variable combinations are actually used, this is the easiest implementation.
 * If I had to start writing code only knowing what data exists, but not really what states will realistically exist, I might start with this kind of implementation and hope to refactor it in the future.
 
-=== 2: State as enums/sealed classes
+== 2: State as enums/sealed classes
 
 Representing states with enums (sealed classes in Kotlin) would make it more obvious how many states there really are, which was not very obvious in the first version.
 Let's enumerate the possible states from the first version:
@@ -116,7 +116,7 @@ Let's enumerate the possible states from the first version:
 |Paid |Invoice |Order is archived now
 |===
 
-==== Data Structures
+=== Data Structures
 
 A data structure like the following can encode the state using C-style enums:
 
@@ -166,13 +166,13 @@ pub enum OrderState {
 
 Ah, looks cleaner already.
 
-==== Functions
+=== Functions
 
 The function implementations change a little.
 We're gonna avoid a big block of procedure this time and will have moved each step into a method.
 We're also only going to look at two functions, the entire example code is linked at the end.
 
-.Validate Function
+==== Validate Function
 
 [source,rust]
 ----
@@ -193,7 +193,7 @@ impl RepairOrder {
 This one only gets more descriptive compared to the initial version, which is helped by the fact that it doesn't validate the initial state.
 Similar to Kotlin, most things in Rust are expressions, which means that an `if`-block can be used in the right-hand-side of an assignment.
 
-.Work Function
+==== Work Function
 
 [source,rust]
 ----
@@ -216,7 +216,7 @@ Here, the current state actually has to be `InProgress` for the function to work
 The unusual `while { ... } { ... }` part is just your average `while`-loop with a block returning the boolean.
 Unlike Kotlin, in Rust it's always possible to open a new block which evaluates to its last expression.
 
-.Thanks borrow checker
+==== Thanks borrow checker
 
 You might think that it would be nicer to extract the `steps_left` binding above the loop, at least that's what I thought.
 But doing that actually leads to a compiler error!
@@ -231,14 +231,14 @@ But even if this wasn't forbidden, like in a garbage-collected language, the ref
 Thankfully, this could only lead to endless loops, but even those are still frowned upon.
 I'll show this in the upcoming post about translating this into Kotlin.
 
-.Pros
+==== Pros
 
 * It's immediately visible how many states there are.
 * Only one state can be active at once
 * States don't have access to data of other states.
 * We can now make fields like `assigned_technician` mandatory, which wasn't possible in the previous approach!
 
-.Con
+==== Con
 
 * Accessing the expected state is a bit cumbersome.
 
