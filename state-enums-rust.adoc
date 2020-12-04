@@ -16,14 +16,15 @@ Let's say our app manages the orders of a bicycle repair shop.
 The main data structure of this app is the `RepairOrder`.
 The Order can be in states like "repair in progress", "waiting for payment" or "paid and archived".
 
+// FIXME summarize the entire algorithm, either in text or with a state diagram
+
 A very straightforward implementation could just distinguish between states using booleans and store all data that is ever needed in the same data type.
 
 == 1: Lots of simple types
 
 This is the data type:
 
-[source,rust]
-----
+```rust
 struct RepairOrder {
     order_number: u64,
     damage_description: Option<String>,
@@ -37,13 +38,13 @@ struct RepairOrder {
     paid: bool,
     invoice: Option<String>,
 }
-----
+```
 
 and this is the function that implements the main workflow:
 
-[source,rust]
-----
+```rust
 fn process(mut order: RepairOrder) {
+    // Validate
     if validate(&order) {
         order.valid = Some(true);
     } else {
@@ -55,9 +56,11 @@ fn process(mut order: RepairOrder) {
 
     assert_eq!(order.valid, Some(true));
 
+    // Find a technician to assign
     let free_technician = find_idle_technician();
     order.assigned_technician = Some(free_technician);
 
+    // Start progress
     order.in_progress = true;
 
     order.steps_left = calculate_steps();
@@ -65,18 +68,23 @@ fn process(mut order: RepairOrder) {
     while !order.steps_left.is_empty() {
         work_on_next_step(&mut order);
     }
+    // Progress is finished
 
     assert!(order.steps_left.is_empty());
 
+    // Send invoice
     let invoice = send_invoice(&order);
     order.invoice = Some(invoice);
 
+    // Wait for payment
     await_payment();
     order.paid = true;
 
     assert!(order.paid);
 }
-----
+```
+
+// think about separating the steps and referring to them with numbers
 
 While all actual work is done in the other functions that are referenced from the main `process` function, all state transitions are visible.
 
