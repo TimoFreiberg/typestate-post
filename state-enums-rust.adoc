@@ -99,6 +99,7 @@ This approach has many weaknesses (it is the 'before' in this 'before/after', af
 ** like `!valid && inProgress`, is that legal?
 ** and for the edge case hunters: Is it correct that `inProgress` stays `true` when the work is done and the billing process starts?
 * some fields only apply to some states (the `invoice` field only becomes relevant when the work is finished, but is always available)
+* you might also notice that this won't be pleasant to test, but in my opinion this is mostly caused by the method being very large, which is not what I want to compare here.
 
 So when working with this grab-bag of variables there's probably a higher chance of overlooking bugs.
 
@@ -177,7 +178,7 @@ Ah, looks cleaner already.
 === Functions
 
 The function implementations change a little.
-We're gonna avoid a big block of procedure this time and will have moved each step into a method.
+We're gonna avoid a big block of procedure this time and will be moving each step into a method.
 We're also only going to look at two functions, the entire example code is linked at the end.
 
 ==== Validate Function
@@ -221,7 +222,7 @@ Similar to Kotlin, most things in Rust are expressions, which means that an `if`
 
 Here, the current state actually has to be `InProgress` for the function to work, and handling that is a bit more complex.
 
-The unusual `while { ... } { ... }` part is just your average `while`-loop with a block returning the boolean.
+The unusual `while { ... } { ... }` part is just your average `while`-loop where the first block evaluates to the boolean which is the `while`-condition.
 Unlike Kotlin, in Rust it's always possible to open a new block which evaluates to its last expression.
 
 ==== Thanks borrow checker
