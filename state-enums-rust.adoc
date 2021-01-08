@@ -14,9 +14,17 @@ This post will show a Rust implementation and a future post will compare it with
 
 Let's say our app manages the orders of a bicycle repair shop.
 The main data structure of this app is the `RepairOrder`.
-The Order can be in states like "repair in progress", "waiting for payment" or "paid and archived".
 
-// FIXME summarize the entire algorithm, either in text or with a state diagram
+`RepairOrders` can be in the following states:
+
+* New
+* Invalid (the process stops in this case)
+* Validated
+* Work in Progress
+* Waiting for Payment
+* Paid/Archived
+
+The validation step from New to Invalid or Validated is the only state transition that has 
 
 A very straightforward implementation could just distinguish between states using booleans and store all data that is ever needed in the same data type.
 
