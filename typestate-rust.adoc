@@ -1,6 +1,40 @@
-= The Typestate Pattern in Rust
+# The Case for the Typestate Pattern - The Typestate Pattern itself
 :source-highlighter: highlightjs
 :highlightjs-languages: rust
+
+In the previous article (TODO insert link), I showed two equivalent implementations of the same program to compare different approaches of encoding state in types.
+
+Now, I'll show the typestate pattern.
+
+## Quick refresher
+
+The data structure of the previous version looked like this:
+
+```rust
+pub struct RepairOrder {
+    pub order_number: u64,
+    pub damage_description: Option<String>,
+    pub vehicle: String,
+    pub customer: Customer,
+    pub state: OrderState
+}
+pub enum OrderState {
+    New,
+    Valid,
+    Invalid { validation_errors: Vec<String> },
+    InProgress {
+        assigned_technician: Employee,
+        steps_left: Vec<String>
+    },
+    WorkDone,
+    WaitingForPayment { invoice: String },
+    Paid { invoice: String }
+}
+```
+
+And the main issue with it was that each function had to pattern match over all possible variants of `OrderState` when doing anything with `state`, although all functions .
+
+
 
 code example
 
@@ -8,11 +42,11 @@ comparison type enum vs this
 
 comparison typestate vs inheritance
 
-== Only in Rust? (Or Haskell?)
+## Only in Rust? (Or Haskell?)
 
 While I have mostly heard of the typestate pattern in the Rust and Haskell community, the examples in this post are easily translatable into Kotlin, which I will showcase in a future blog post.
 
-== Further reading
+## Further reading
 
 A more in-depth look at the way Rust's type system helps representing state: http://cliffle.com/blog/rust-typestate/
 
