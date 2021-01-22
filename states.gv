@@ -1,0 +1,7 @@
+digraph G {
+    New -> Validated 
+        -> "Work In Progress" 
+        -> "Waiting for Payment" 
+        -> "Paid/Archived"
+    New -> Invalid
+}

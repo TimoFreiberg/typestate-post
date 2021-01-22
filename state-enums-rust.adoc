@@ -18,12 +18,7 @@ The main data structure of this app is the `RepairOrder`.
 
 A `RepairOrder` can be in the following distinct states:
 
-* New
-* Invalid (the process stops in this case)
-* Validated
-* Work in Progress
-* Waiting for Payment
-* Paid/Archived
+image::states.svg["New, Invalid, Validated, Work In Progress, Waiting for Payment, Paid/Archived"]
 
 The validation step from New to Invalid or Validated is the only state transition that can end up in two possible states.
 All other state transitions are completely deterministic.
@@ -227,18 +222,25 @@ If this con seems like a drawback of adding type explicitness, let me make the c
 
 == The case for going even further: The typestate pattern
 
+This might come as a surprise, but the example application was designed to fit the typestate pattern particularly well.
+It has the same benefits as the states-as-enums approach (even partially improving on them) and removes the drawback - no need to have the cumbersome state check at the start of every method!
+
+But first, let's talk a bit about why the version using enums is suboptimal for this algorithm.
+
 I chose a very linear state machine here, where the human reader can see what the expected state at each line of the program will be.
 Any effort required to verify that the `state` field actually contains the expected state can feel like annoying overhead that the type checker is forcing upon the human.
 
-But much of this overhead came from the power to always change the `state` at any time - which wasn't even needed!
+But much of this overhead comes from the power to always change the `state` at any time - which isn't even needed!
+Maybe making the interfaces more restrictive could make the code look nicer...
 
-The design would be just as correct (and even more specific), if each state had its completely different type!
+One way to do this without using any modern language features is to introduce completely separate types for each state.
 In that case, `validate` would receive a `NewRepairOrder` and return a `Result<ValidRepairOrder, InvalidRepairOrder>`.
 Similarly, `work` would be a mutating method on `InProgressRepairOrder`.
 
 In fact, the typestate pattern is a similar approach to having completely separate types for each state.
-Stay tuned for the next article where I'm going to show the typestate version.
+
+Read the next article for an introduction to the typestate pattern and a discussion on when to choose which approach.
 
 '''
 
-The example code is available https://github.com/TimoFreiberg/typestate-post/blob/master/typestate-rust/src/repair_order/state_enum.rs[here].
+The full example code is available https://github.com/TimoFreiberg/typestate-post/blob/master/typestate-rust/src/repair_order/state_enum.rs[here].
