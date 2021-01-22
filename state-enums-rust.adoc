@@ -1,4 +1,4 @@
-# The case for the type-state pattern 1: Algebraic Data Types
+# The case for the typestate pattern 1: Algebraic Data Types
 :source-highlighter: highlightjs
 :highlightjs-languages: rust
 
