@@ -100,11 +100,11 @@ All actual work is done in the other functions, but all state transitions are vi
 
 ### Cons
 
-This approach has many weaknesses (it is the 'before' in this 'before/after', after all):
+This approach has many weaknesses (it is the 'before' in this 'before vs after' comparison, so this was intentional):
 
 * it's not very obvious from looking at the data structure how many possible states there are
 ** One per boolean? 2^number_of_booleans?
-* i have to look at the logic that uses the data to see which states are possible and which data is used when
+* I have to look at the logic that uses the data to see which states are possible and which data is used when
 * it is technically possible for the data to be in an invalid state
 ** like `!valid && inProgress`, is that legal?
 ** is it even correct that `inProgress` stays `true` when the work is done and the billing process starts?
