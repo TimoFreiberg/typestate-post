@@ -1,7 +1,6 @@
-# The case for the typestate pattern 1: Algebraic Data Types
+# The Case for the Typestate Pattern - Algebraic Data Types
 :source-highlighter: highlightjs
 :highlightjs-languages: rust
-
 
 The typestate pattern is an approach to designing data types and APIs that is quite popular in the Haskell and Rust ecosystem.
 I haven't heard of it in the Java/Kotlin world, though.
@@ -17,7 +16,7 @@ Let's first introduce the example:
 Let's say our app manages the orders of a bicycle repair shop.
 The main data structure of this app is the `RepairOrder`.
 
-`RepairOrders` can be in the following distinct states:
+`RepairOrder`s can be in the following distinct states:
 
 * New
 * Invalid (the process stops in this case)
@@ -238,7 +237,7 @@ In that case, `validate` would receive a `NewRepairOrder` and return a `Result<V
 Similarly, `work` would be a mutating method on `InProgressRepairOrder`.
 
 In fact, the typestate pattern is a similar approach to having completely separate types for each state.
-Stay tuned for part 2.
+Stay tuned for the next article where I'm going to show the typestate version.
 
 '''
 
