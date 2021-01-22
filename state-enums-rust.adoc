@@ -16,7 +16,7 @@ Let's first introduce the example:
 Let's say our app manages the orders of a bicycle repair shop.
 The main data structure of this app is the `RepairOrder`.
 
-`RepairOrder`s can be in the following distinct states:
+A `RepairOrder` can be in the following distinct states:
 
 * New
 * Invalid (the process stops in this case)
