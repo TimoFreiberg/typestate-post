@@ -65,15 +65,16 @@ impl RepairOrder {
         };
     }
     fn work(&mut self) {
-        while {
-            let steps_left = match &self.state {
-                State::InProgress { steps_left, .. } => steps_left,
-                other => panic!("Expected InProgress, but was {:?}", other),
-            };
-            !steps_left.is_empty()
-        } {
+        while self.has_steps_left() {
             self.work_on_next_step()
         }
+    }
+    fn has_steps_left(&self) -> bool {
+        let steps_left = match &self.state {
+            State::InProgress { steps_left, .. } => steps_left,
+            other => panic!("Expected InProgress, but was {:?}", other),
+        };
+        !steps_left.is_empty()
     }
     fn send_invoice(&mut self) {
         let invoice = get_invoice();

@@ -1,21 +1,23 @@
-= Towards the Typestate Pattern in Rust: Algebraic Data Types
+# The case for the type-state pattern 1: Algebraic Data Types
 :source-highlighter: highlightjs
 :highlightjs-languages: rust
 
-Types are usually used to distinguish different data, or the same data, but in a different representation.
-But when data can be in several different states, it can be advantageous to give each state its own type.
 
-Let's take a look at an representative example, introduce types for each state and see how this changes the code.
+The typestate pattern is an approach to designing data types and APIs that is quite popular in the Haskell and Rust ecosystem.
+I haven't heard of it in the Java/Kotlin world, though.
+So in this blog series, I'll show different representations of the same example program and talk about each versions pros and cons.
 
+I'll use Rust at the beginning and translate the program into Kotlin in a later article to show that this design pattern is also usable in Kotlin.
 We'll also take the opportunity to compare Rust with Kotlin.
-This post will show a Rust implementation and a future post will compare it with a Kotlin implementation.
 
-== An example data type with many different states
+Let's first introduce the example:
+
+## An example data type with many different states
 
 Let's say our app manages the orders of a bicycle repair shop.
 The main data structure of this app is the `RepairOrder`.
 
-`RepairOrders` can be in the following states:
+`RepairOrders` can be in the following distinct states:
 
 * New
 * Invalid (the process stops in this case)
@@ -24,11 +26,12 @@ The main data structure of this app is the `RepairOrder`.
 * Waiting for Payment
 * Paid/Archived
 
-The validation step from New to Invalid or Validated is the only state transition that has 
+The validation step from New to Invalid or Validated is the only state transition that can end up in two possible states.
+All other state transitions are completely deterministic.
 
 A very straightforward implementation could just distinguish between states using booleans and store all data that is ever needed in the same data type.
 
-== 1: Lots of simple types
+## Implementation 1: Lots of simple types
 
 This is the data type:
 
@@ -52,7 +55,7 @@ and this is the function that implements the main workflow:
 
 ```rust
 fn process(mut order: RepairOrder) {
-    // Validate
+    // 1. Validate
     if validate(&order) {
         order.valid = Some(true);
     } else {
@@ -64,11 +67,11 @@ fn process(mut order: RepairOrder) {
 
     assert_eq!(order.valid, Some(true));
 
-    // Find a technician to assign
+    // 2a. Find a technician to assign
     let free_technician = find_idle_technician();
     order.assigned_technician = Some(free_technician);
 
-    // Start progress
+    // 2b. Start progress
     order.in_progress = true;
 
     order.steps_left = calculate_steps();
@@ -80,65 +83,47 @@ fn process(mut order: RepairOrder) {
 
     assert!(order.steps_left.is_empty());
 
-    // Send invoice
+    // 3. Send invoice
     let invoice = send_invoice(&order);
     order.invoice = Some(invoice);
 
     // Wait for payment
     await_payment();
+    
+    // 4. Order is now paid and archived
     order.paid = true;
 
     assert!(order.paid);
 }
 ```
 
-// think about separating the steps and referring to them with numbers
+All actual work is done in the other functions, but all state transitions are visible here.
 
-While all actual work is done in the other functions that are referenced from the main `process` function, all state transitions are visible.
-
-=== Cons
+### Cons
 
 This approach has many weaknesses (it is the 'before' in this 'before/after', after all):
 
-* it's not very obvious how many possible states there are
+* it's not very obvious from looking at the data structure how many possible states there are
 ** One per boolean? 2^number_of_booleans?
-* the reader has to look at the logic where the data is used to see which states are possible and which data is used when
+* i have to look at the logic that uses the data to see which states are possible and which data is used when
 * it is technically possible for the data to be in an invalid state
 ** like `!valid && inProgress`, is that legal?
-** and for the edge case hunters: Is it correct that `inProgress` stays `true` when the work is done and the billing process starts?
+** is it even correct that `inProgress` stays `true` when the work is done and the billing process starts?
 * some fields only apply to some states (the `invoice` field only becomes relevant when the work is finished, but is always available)
 * you might also notice that this won't be pleasant to test, but in my opinion this is mostly caused by the method being very large, which is not what I want to compare here.
 
 So when working with this grab-bag of variables there's probably a higher chance of overlooking bugs.
 
-=== Pros
+### Pros
 
 * If all variable combinations are actually used, this is the easiest implementation.
 * If I had to start writing code only knowing what data exists, but not really what states will realistically exist, I might start with this kind of implementation and hope to refactor it in the future.
 
-== 2: State as enums/sealed classes
+== 2: State represented with sum types/enums/sealed classes
 
-Representing states with enums (sealed classes in Kotlin) would make it more obvious how many states there really are, which was not very obvious in the first version.
-Let's enumerate the possible states from the first version:
+Representing the possible states using C-style enums would help make it visible how many states there are and make invalid boolean combinations impossible:
 
-|===
-|State |Associated Data |Comment
-
-|New |- |-
-|Valid |- |-
-|Invalid |validationErrors |Process will be aborted in this case
-|InProgress |assignedTechnician, stepsLeft |-
-|WorkDone |- |-
-|WaitingForPayment |Invoice |-
-|Paid |Invoice |Order is archived now
-|===
-
-=== Data Structures
-
-A data structure like the following can encode the state using C-style enums:
-
-[source,rust]
-----
+```rust
 pub struct RepairOrder {
     pub order_number: u64,
     pub damage_description: Option<String>,
@@ -153,13 +138,12 @@ pub struct RepairOrder {
 pub enum OrderState {
     New, Valid, Invalid, InProgress, WorkDone, WaitingForPayment, Paid
 }
-----
+```
 
 But we would like to also solve the issue that several fields are only relevant in some states.
-To do this, we can move those fields from `RepairOrder` into the relevant states using ~algebraic data types~
+To do this, we can move those fields from `RepairOrder` into the relevant states using ~algebraic data types~ (using enums in Rust or sealed classes in Kotlin).
 
-[source,rust]
-----
+```rust
 pub struct RepairOrder {
     pub order_number: u64,
     pub damage_description: Option<String>,
@@ -179,24 +163,23 @@ pub enum OrderState {
     WaitingForPayment { invoice: String },
     Paid { invoice: String }
 }
-----
+```
 
 Ah, looks cleaner already.
 
 === Functions
 
 The function implementations change a little.
-We're gonna avoid a big block of procedure this time and will be moving each step into a method.
-We're also only going to look at two functions, the entire example code is linked at the end.
+We're gonna avoid a big procedural block this time and move each step into a method.
+We're also only going to look at two functions, the entire example code is linked https://github.com/TimoFreiberg/typestate-post/blob/master/typestate-rust/src/repair_order/state_enum.rs[here].
 
 ==== Validate Function
 
-[source,rust]
-----
+```rust
 impl RepairOrder {
     //...
     fn validate(&mut self) {
-        self.state = if is_valid() {
+        self.state = if self.is_valid() {
             State::Valid
         } else {
             let validation_errors = get_validation_errors();
@@ -205,48 +188,30 @@ impl RepairOrder {
     }
     //...
 }
-----
+```
 
 This one only gets more descriptive compared to the initial version, which is helped by the fact that it doesn't validate the initial state.
-Similar to Kotlin, most things in Rust are expressions, which means that an `if`-block can be used in the right-hand-side of an assignment.
 
 ==== Work Function
 
-[source,rust]
-----
+```rust
     //...
     fn work(&mut self) {
-        while {
-            let steps_left = match &self.state {
-                State::InProgress { steps_left, .. } => steps_left,
-                other => panic!("Expected InProgress, but was {:?}", other),
-            };
-            !steps_left.is_empty()
-        } {
+        while self.has_steps_left() {
             self.work_on_next_step()
         }
+    }
+    fn has_steps_left(&self) -> bool {
+        let steps_left = match &self.state {
+            State::InProgress { steps_left, .. } => steps_left,
+            other => panic!("Expected InProgress, but was {:?}", other),
+        };
+        !steps_left.is_empty()
+    }
     //...
-----
+```
 
 Here, the current state actually has to be `InProgress` for the function to work, and handling that is a bit more complex.
-
-The unusual `while { ... } { ... }` part is just your average `while`-loop where the first block evaluates to the boolean which is the `while`-condition.
-Unlike Kotlin, in Rust it's always possible to open a new block which evaluates to its last expression.
-
-==== Thanks borrow checker
-
-You might think that it would be nicer to extract the `steps_left` binding above the loop, at least that's what I thought.
-But doing that actually leads to a compiler error!
-That's because it would mean that part of `self` (namely `state`) is referenced (or borrowed) while `self.work_on_next_step()` is free to mutate `self` (like `state`)!
-
-Rust, due to its lack of a GC, immediately frees unused memory.
-Changing `state` in `work_on_next_step` to e.g. `State::WorkDone` would free the memory where the `steps_left` inside `State::InProgress` war previously.
-The next loop would then once again attempt to check the emptiness of the `steps_left` it still has a reference to.
-This would be a use after free, which Rust thankfully prevents.
-
-But even if this wasn't forbidden, like in a garbage-collected language, the refactoring that Rust prevented could lead to the exact same problem scenario.
-Thankfully, this could only lead to endless loops, but even those are still frowned upon.
-I'll show this in the upcoming post about translating this into Kotlin.
 
 ==== Pros
 
@@ -257,16 +222,24 @@ I'll show this in the upcoming post about translating this into Kotlin.
 
 ==== Con
 
-* Accessing the expected state is a bit cumbersome.
+* Accessing the expected state is a bit cumbersome, requiring a `match` every time which needs to either return an error or panic if the wrong state was used.
 
 If this con seems like a drawback of adding type explicitness, let me make the case for going even further:
 
 == The case for going even further: The typestate pattern
 
-This algorithm was contrived to be a linear state machine, so the human reader can always see what the expected state at each line of the program will be.
-Any effort required to verify that the expected state is in fact stored in the `state` field can feel like annoying overhead that the type checker is forcing upon the human.
+I chose a very linear state machine here, where the human reader can see what the expected state at each line of the program will be.
+Any effort required to verify that the `state` field actually contains the expected state can feel like annoying overhead that the type checker is forcing upon the human.
 
 But much of this overhead came from the power to always change the `state` at any time - which wasn't even needed!
-The design would be just as correct, and even more specific, if `validate` accepted a `NewRepairOrder` and returned a `Result<ValidRepairOrder, InvalidRepairOrder>` (you can probably imagine what those types would look like).
-This is in fact a close approximation of what I'm going to show in the next blog post.
 
+The design would be just as correct (and even more specific), if each state had its completely different type!
+In that case, `validate` would receive a `NewRepairOrder` and return a `Result<ValidRepairOrder, InvalidRepairOrder>`.
+Similarly, `work` would be a mutating method on `InProgressRepairOrder`.
+
+In fact, the typestate pattern is a similar approach to having completely separate types for each state.
+Stay tuned for part 2.
+
+'''
+
+The example code is available https://github.com/TimoFreiberg/typestate-post/blob/master/typestate-rust/src/repair_order/state_enum.rs[here].
