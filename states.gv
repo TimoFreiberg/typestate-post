@@ -1,7 +1,15 @@
 digraph G {
+    rankdir="LR"
+    size="8"
+    
+    node [shape = point]; init;
+
+    node [shape = ellipse];
+    init -> New;
+    New -> Invalid
     New -> Validated 
         -> "Work In Progress" 
         -> "Waiting for Payment" 
         -> "Paid/Archived"
-    New -> Invalid
 }
+
