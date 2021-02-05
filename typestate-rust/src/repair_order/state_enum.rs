@@ -5,7 +5,7 @@ pub fn process(mut order: RepairOrder) {
 
     order.validate();
 
-    if let State::Invalid { .. } = order.state {
+    if order.is_invalid() {
         return;
     }
 
@@ -90,6 +90,12 @@ impl RepairOrder {
     }
     fn work_on_next_step(&mut self) {
         todo!()
+    }
+    fn is_invalid(&self) -> bool {
+        match self.state {
+            State::Invalid { .. } => true,
+            _ => false,
+        }
     }
 }
 

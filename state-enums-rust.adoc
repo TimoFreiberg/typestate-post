@@ -165,6 +165,29 @@ Ah, looks cleaner already.
 
 The function implementations change a little.
 We're gonna avoid a big procedural block this time and move each step into a method.
+
+The main function now mostly consists of state transitions:
+
+```rust
+pub fn process(mut order: RepairOrder) {
+    assert_eq!(order.state, State::New);
+
+    order.validate();
+
+    if order.is_invalid() {
+        return;
+    }
+
+    let technician = find_idle_technician();
+    let steps_left = calculate_steps();
+    order.start_progress(technician, steps_left);
+
+    order.work();
+    order.send_invoice();
+    order.await_payment();
+}
+```
+
 We're also only going to look at two functions, the entire example code is linked https://github.com/TimoFreiberg/typestate-post/blob/master/typestate-rust/src/repair_order/state_enum.rs[here].
 
 ==== Validate Function
@@ -223,21 +246,21 @@ If this con seems like a drawback of adding type explicitness, let me make the c
 == The case for going even further: The typestate pattern
 
 This might come as a surprise, but the example application was designed to fit the typestate pattern particularly well.
-It has the same benefits as the states-as-enums approach (even partially improving on them) and removes the drawback - no need to have the cumbersome state check at the start of every method!
+Therefore, the version using the typestate pattern will have the same benefits as the states-as-enums version (even partially improving on them), without the drawback.
 
-But first, let's talk a bit about why the version using enums is suboptimal for this algorithm.
+Before introducing the final version though, let's first talk about why the version using enums is suboptimal for this specific algorithm.
 
-I chose a very linear state machine here, where the human reader can see what the expected state at each line of the program will be.
+The state transitions of the order are deterministic and visible to the human reader, who can see what the expected state at each line of the program will be.
 Any effort required to verify that the `state` field actually contains the expected state can feel like annoying overhead that the type checker is forcing upon the human.
 
-But much of this overhead comes from the power to always change the `state` at any time - which isn't even needed!
-Maybe making the interfaces more restrictive could make the code look nicer...
+But the typechecker only requires these checks because the state field could be changed at any point - a power we don't need!
+Maybe we could give up these powers, restrict the functions to only accept correct states and make our lives easier...
 
 One way to do this without using any modern language features is to introduce completely separate types for each state.
 In that case, `validate` would receive a `NewRepairOrder` and return a `Result<ValidRepairOrder, InvalidRepairOrder>`.
-Similarly, `work` would be a mutating method on `InProgressRepairOrder`.
-
-In fact, the typestate pattern is a similar approach to having completely separate types for each state.
+Similarly, `work` would be a mutating method on `InProgressRepairOrder`.  
+This is definitely a valid approach in some places.
+I would recomend the typestate pattern here, though.
 
 Read the next article for an introduction to the typestate pattern and a discussion on when to choose which approach.
 
