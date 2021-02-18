@@ -1,4 +1,4 @@
-# The Case for the Typestate Pattern - Algebraic Data Types
+# The Case for the Typestate Pattern - Introducing Algebraic Data Types
 :source-highlighter: highlightjs
 :highlightjs-languages: rust
 
