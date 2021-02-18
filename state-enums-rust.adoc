@@ -259,10 +259,9 @@ Maybe we could give up these powers, restrict the functions to only accept corre
 One way to do this without using any modern language features is to introduce completely separate types for each state.
 In that case, `validate` would receive a `NewRepairOrder` and return a `Result<ValidRepairOrder, InvalidRepairOrder>`.
 Similarly, `work` would be a mutating method on `InProgressRepairOrder`.  
-This is definitely a valid approach in some places.
-I would recomend the typestate pattern here, though.
+This is definitely a valid approach in some places, but mostly way too verbose and clunky.
 
-Read the next article for an introduction to the typestate pattern and a discussion on when to choose which approach.
+Read the next article to see the typestate pattern improve everything, and for a discussion on when to choose which approach.
 
 '''
 
