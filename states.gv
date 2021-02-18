@@ -2,14 +2,22 @@ digraph G {
     rankdir="LR"
     size="8"
     
-    node [shape = point]; init;
+    edge [arrowsize=0.5,
+            color="#616161"
+            ]
+    node [shape = point,
+            color="#616161"]; init;
 
-    node [shape = ellipse];
+    node [shape = rectangle,
+            fontname="Roboto",
+            style="filled,setlinewidth(0)",
+            fillcolor="#616161",
+            fontcolor=white];
     init -> New;
     New -> Invalid
     New -> Validated 
         -> "Work In Progress" 
-        -> "Waiting for Payment" 
+        -> "Waiting for Payment"
         -> "Paid/Archived"
 }
 
