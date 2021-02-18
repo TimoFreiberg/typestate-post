@@ -32,7 +32,11 @@ pub enum OrderState {
 }
 ```
 
-And the main issue with it was that each function had to pattern match over all possible variants of `OrderState` when doing anything with `state`, although all functions .
+And the main issue with it was that each function had to pattern match over all possible variants of `OrderState` when doing anything with `state`, although all functions expected to always be called with a single state.
+
+In the end, I noted that this problem could be solved by introducing completely separate types for each state, like `struct NewRepairOrder {...}`, `struct WaitingForPaymentRepairOrder {invoice: String, ...}` and so on.
+
+This approach has all of the benefits as the previous version using a state enum, with the added benefit that 
 
 
 
