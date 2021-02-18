@@ -1,0 +1,11 @@
+# The Case for the Typestate Pattern - In Kotlin
+:source-highlighter: highlightjs
+:highlightjs-languages: rust, kotlin
+
+So far, I introduced several approaches to designing types to represent states in Rust.
+Now I'll show how that is also possible in Kotlin.
+
+OLD
+
+comparison with inheritance?
+
