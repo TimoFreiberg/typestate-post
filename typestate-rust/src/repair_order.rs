@@ -1,5 +1,6 @@
 pub mod single_variables;
 pub mod state_enum;
+pub mod typestate;
 
 #[derive(Debug)]
 pub struct Customer {
