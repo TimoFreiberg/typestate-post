@@ -68,6 +68,7 @@ impl RepairOrder {
         while self.has_steps_left() {
             self.work_on_next_step()
         }
+        self.state = State::WorkDone;
     }
     fn has_steps_left(&self) -> bool {
         let steps_left = match &self.state {
