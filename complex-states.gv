@@ -1,0 +1,41 @@
+digraph G {
+        rankdir="LR"
+        size="8"
+
+        edge [arrowsize=0.5,
+                color="#616161"
+                ]
+        node [shape = point,
+                color="#616161"]; init;
+
+        node [shape = rectangle,
+                fontname="Roboto",
+                style="filled,setlinewidth(0)",
+                fillcolor="#616161",
+                fontcolor=white];
+        init -> New;
+        New -> Invalid
+        New -> "April Fools"
+        "April Fools" -> Garbage
+        New -> "Low Priority"
+        New -> "High Priority"
+        Invalid -> Krangled
+        Invalid -> Recovered
+        Recovered -> New
+        Recovered -> "Low Priority"
+        "Low Priority" -> "Waiting for Worker"
+        "Low Priority" -> "High Priority"
+        "High Priority" -> "Waiting for Worker"
+        "High Priority" -> "Low Priority"
+        "Waiting for Worker" -> Garbage
+        "Waiting for Worker" -> "Waiting for Printer"
+        "Waiting for Printer" -> "Waiting for Friday afternoon"
+        "Waiting for Friday afternoon" -> Krangled
+        "Waiting for Friday afternoon" -> "Waiting for Printer"
+        "Waiting for Printer" -> "Work in Progress"
+        "Work in Progress" -> "Low Priority"
+        "Work in Progress" -> "Finished"
+        "Work in Progress" -> "Waiting for Worker"
+        "Waiting for Printer" -> "Invalid"
+}
+
