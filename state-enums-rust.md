@@ -16,7 +16,7 @@ The main data structure of this app is the `RepairOrder`.
 
 A `RepairOrder` can be in the following distinct states:
 
-!["New, Invalid, Validated, Work In Progress, Waiting for Payment, Paid/Archived"](states.svg)
+![New, Invalid, Validated, Work In Progress, Waiting for Payment, Paid/Archived](states.svg)
 
 The validation step from New to Invalid or Validated is the only state transition that can end up in two possible states.
 All other state transitions are completely deterministic.
@@ -263,4 +263,4 @@ Read the next article to see the typestate pattern improve everything, and for a
 
 ---
 
-The full example code is available https://github.com/TimoFreiberg/typestate-post/blob/master/typestate-rust/src/repair_order/state_enum.rs[here].
+The full example code is available [here](https://github.com/TimoFreiberg/typestate-post/blob/master/typestate-rust/src/repair_order/state_enum.rs).
