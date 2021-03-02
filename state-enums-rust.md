@@ -81,7 +81,7 @@ fn process(mut order: RepairOrder) {
 
     // Wait for payment
     await_payment();
-    
+
     // 4. Order is now paid and archived
     order.paid = true;
 
@@ -186,7 +186,7 @@ pub fn process(mut order: RepairOrder) {
 }
 ```
 
-We're also only going to look at two functions, the entire example code is linked https://github.com/TimoFreiberg/typestate-post/blob/master/typestate-rust/src/repair_order/state_enum.rs[here].
+We're also only going to look at two functions, the entire example code is linked (here)[https://github.com/TimoFreiberg/typestate-post/blob/master/typestate-rust/src/repair_order/state_enum.rs].
 
 #### Validate Function
 
