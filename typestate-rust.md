@@ -1,8 +1,6 @@
 # The Case for the Typestate Pattern - The Typestate Pattern itself
-:source-highlighter: highlightjs
-:highlightjs-languages: rust
 
-In the previous article (TODO insert link), I showed two equivalent implementations of the same program to compare different approaches of encoding state in types.
+In the [previous article](https://www.novatec-gmbh.de/en/blog/the-case-for-the-typestate-pattern-introducing-algebraic-data-types/), I showed two equivalent implementations of the same program to compare different approaches of encoding state in types.
 
 Now, I'll show the typestate pattern.
 
@@ -35,7 +33,7 @@ pub enum OrderState {
 And the main issue with it was that each function had to pattern match over all possible variants of `OrderState` when doing anything with `state`, although all functions expected to always be called with a single state.
 
 To improve that, we just need to give each state its own type.
-But instead of having separate `NewRepairOrder` (etc) types, we can use types like `RepairOrder<New>` and `RepairOrder<InProgress>`.
+But instead of having separate `NewRepairOrder`, `InvalidRepairOrder`, ... types, we can use types like `RepairOrder<New>` and `RepairOrder<InProgress>`.
 The data structures look quite similar to the previous version:
 
 ```rust
@@ -59,8 +57,8 @@ struct WaitingForPayment { invoice: String }
 struct Paid { invoice: String }
 ```
 
-Very similar, but now the states are not connected at all.
-Let's look at some of the state-transitioning functions:
+Very similar, but now the states are not part of the same type but their own separate types.
+Let's look at how some of the state-transitioning functions look:
 
 ```rust
 impl RepairOrder<New> {
@@ -106,7 +104,7 @@ impl<State> RepairOrder<State> {
 }
 ```
 
-This is unfortunately necessary to change the type of the state.
+This is unfortunately necessary to change the state type parameter.[^state-type-change]
 
 The main function still only consists of state transitions:
 
@@ -180,3 +178,6 @@ A more in-depth look at the way Rust's type system helps representing state: htt
 
 The motivation behind an unusually type-safe path handling library, written in Haskell (which blew my mind at the time): https://chrisdone.com/posts/path-package/
 
+---
+
+[^state-type-change]: The same verbose workaround is required in Kotlin. Haskell does not have the same issue, mostly because there's 
