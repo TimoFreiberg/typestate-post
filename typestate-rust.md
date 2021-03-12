@@ -30,22 +30,31 @@ pub enum OrderState {
 }
 ```
 
-And the main issue with it was that each function had to pattern match over all possible variants of `OrderState` when doing anything with `state`, although all functions expected to always be called with a single state.
+And there was one issue I had with that approach:
+Every function that expected a particular state had to perform the same annoying pattern matching:
 
-To improve that, we just need to give each state its own type.
-But instead of having separate `NewRepairOrder`, `InvalidRepairOrder`, ... types, we can use types like `RepairOrder<New>` and `RepairOrder<InProgress>`.
+```rust
+match &self.state {
+    State::Valid => { /* do something */ }
+    other => panic!(),
+};
+```
+
+To improve that, we can give each state its own type.
+But instead of having separate `NewRepairOrder`, `InvalidRepairOrder` (etc) types, we can use the state both as a field and as a type parameter.
+This changes the corresponding types into `RepairOrder<New>` and `RepairOrder<Invalid>`.
 The data structures look quite similar to the previous version:
 
 ```rust
 #[derive(Debug)]
-pub struct RepairOrder<State> {
+pub struct RepairOrder<State> { // <- Added type parameter
     pub order_number: u64,
     pub damage_description: Option<String>,
     pub vehicle: String,
     pub customer: Customer,
-    pub state: State,
+    pub state: State, // <- this value is now completely polymorphic
 }
-struct New;
+struct New; // <- One of our states
 struct Valid;
 struct Invalid { validation_errors: Vec<String> }
 struct InProgress {
@@ -86,9 +95,9 @@ impl RepairOrder<InProgress> {
 ```
 
 So the state is now visible in the types, allowing us to directly access its data without any further checks.
-The type signatures also make all state transitions very visible, which could help understand more complicated state machines.
+The type signatures also make all state transitions very visible, which could make complicated state machines more readable.
 
-You might have noticed that I dont set the state via `self.state = new_state`, instead using a helper function, which looks like this:
+You might have noticed that I don't set the state via `self.state = new_state`, instead using a helper function, which looks like this:
 
 ```rust
 impl<State> RepairOrder<State> {
@@ -104,9 +113,10 @@ impl<State> RepairOrder<State> {
 }
 ```
 
-This is unfortunately necessary to change the state type parameter.[^state-type-change]
+This is unfortunately necessary to change the state type parameter[^state-type-update].
 
-The main function still only consists of state transitions:
+The main function still only consists of state transitions, 
+but now the return values of all the functions need to be used for each next step.
 
 ```rust
 pub fn process(order: RepairOrder<New>) {
@@ -127,13 +137,13 @@ pub fn process(order: RepairOrder<New>) {
 }
 ```
 
-In comparison to the previous version, intermediate variables have to be used here as each new state is the return value of the previous call.
-I criticised that aspect of the previous version, but surely having to give intermediate steps a name is fine?
+I criticised the verbosity of the previous version, but surely having to give intermediate steps a name is fine?
+Well, we actually don't have to, because returning the next state gave us a fluent API.
+Using method chaining shortens the function drastically:
 
-Well, let's just show the final, optimal form of the `process` function and admire its beauty.
 
 ```rust
-pub fn process_the_ultimate(
+pub fn process(
     order: RepairOrder<New>,
 ) -> Result<RepairOrder<Paid>, RepairOrder<Invalid>> {
     Ok(order
@@ -145,39 +155,43 @@ pub fn process_the_ultimate(
 }
 ```
 
-With small changes to its API to make it more realistic and allow use of the `?` operator.  
-You know, this was intended as a joke, but I actually think this is the nicest version so far.
+I had to change the function signature slightly to use the [`?` operator](https://doc.rust-lang.org/edition-guide/rust-2018/error-handling-and-panics/the-question-mark-operator-for-easier-error-handling.html), but I think this only makes it more realistic.
+
+The method chaining might not be everyones cup of tea, but I actually think this is the prettiest version so far.
 
 ### Pros
 
-* All of the previous version
+* All pros of the previous version
 * More specific type signatures
 * Allows method chaining
     * Ok this is a bit unfair, the previous version could have also offered a fluent API
         It's very natural in this version, though
-* No boilerplate state unpacking
+* No boilerplate state unpacking with `match state {...}`
 
 ### Con
 
 * One boilerplate state transitioning function is required
 
-## So is this just better?
+## Awesome, I'm gonna use this pattern everywhere now!
 
-Nope, it's all situational.
-The specific algorithm I made up suits the typestate pattern well.
+Well, it depends.
+I would argue that for this specific algorithm I made up, the typestate pattern is the most suitable alternative.
 
-I'm going to give some examples where each approach works best in the next article.
+I'm going to give some examples where other approaches work much better in the next article.
 
 ## Only in Rust? (Or Haskell?)
 
-While I have mostly heard of the typestate pattern in the Rust and Haskell community, the examples in this post are easily translatable into Kotlin, which I will showcase later in this series.
+I have mostly heard of the typestate pattern in the Rust and Haskell community.
+But the examples in this post are easily translatable into Kotlin, which I'm going to show in a future article.
 
 ## Further reading
 
-A more in-depth look at the way Rust's type system helps representing state: http://cliffle.com/blog/rust-typestate/
+I can recommend these articles:
 
-The motivation behind an unusually type-safe path handling library, written in Haskell (which blew my mind at the time): https://chrisdone.com/posts/path-package/
+http://cliffle.com/blog/rust-typestate/ - a more in-depth look at the way Rust's type system helps representing state.
+
+https://chrisdone.com/posts/path-package/ - the motivation behind an unusually type-safe path handling library, written in Haskell (which blew my mind at the time).
 
 ---
 
-[^state-type-change]: The same verbose workaround is required in Kotlin. Haskell does not have the same issue, mostly because there's 
+[^state-type-update]: The same verbose workaround is required in Kotlin. Haskell does not have the same issue, but then there's no in-place mutation in Haskell. There's a Rust [RFC](https://github.com/rust-lang/rfcs/pull/2528) in progress to improve this exact interaction.
