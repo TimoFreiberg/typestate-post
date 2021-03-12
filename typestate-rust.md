@@ -4,7 +4,7 @@ In the [previous article](https://www.novatec-gmbh.de/en/blog/the-case-for-the-t
 
 Now, I'll show the typestate pattern.
 
-## Quick refresher
+### Quick refresher
 
 The data structure of the previous version looked like this:
 
@@ -159,32 +159,33 @@ I had to change the function signature slightly to use the [`?` operator](https:
 
 The method chaining might not be everyones cup of tea, but I actually think this is the prettiest version so far.
 
-### Pros
+#### Pros
 
 * All pros of the previous version
 * More specific type signatures
 * Allows method chaining
-    * Ok this is a bit unfair, the previous version could have also offered a fluent API
-        It's very natural in this version, though
+    * Ok this is a bit unfair, the previous version could have also offered a fluent API  
+    It's very natural in this version, though
 * No boilerplate state unpacking with `match state {...}`
 
-### Con
+#### Con
 
 * One boilerplate state transitioning function is required
 
-## Awesome, I'm gonna use this pattern everywhere now!
+### Awesome, I'm gonna use this pattern everywhere now!
 
 Well, it depends.
-I would argue that for this specific algorithm I made up, the typestate pattern is the most suitable alternative.
+I would argue that for this specific algorithm I made up, the typestate pattern would be a good idea.
 
+In other situations, it might be a very bad idea though.
 I'm going to give some examples where other approaches work much better in the next article.
 
-## Only in Rust? (Or Haskell?)
+### Only in Rust? (Or Haskell?)
 
 I have mostly heard of the typestate pattern in the Rust and Haskell community.
 But the examples in this post are easily translatable into Kotlin, which I'm going to show in a future article.
 
-## Further reading
+### Further reading
 
 I can recommend these articles:
 
