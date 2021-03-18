@@ -172,7 +172,7 @@ The method chaining might not be everyones cup of tea, but I actually think this
 
 * One boilerplate state transitioning function is required
 
-### Awesome, I'm gonna use this pattern everywhere now!
+### Sounds awesome, should I use this pattern everywhere now?
 
 Well, it depends.
 I would argue that for this specific algorithm I made up, the typestate pattern would be a good idea.
@@ -189,9 +189,9 @@ But the examples in this post are easily translatable into Kotlin, which I'm goi
 
 I can recommend these articles:
 
-http://cliffle.com/blog/rust-typestate/ - a more in-depth look at the way Rust's type system helps representing state.
+[http://cliffle.com/blog/rust-typestate/](http://cliffle.com/blog/rust-typestate/) - a more in-depth look at the way Rust's type system helps representing state.
 
-https://chrisdone.com/posts/path-package/ - the motivation behind an unusually type-safe path handling library, written in Haskell (which blew my mind at the time).
+[https://chrisdone.com/posts/path-package/](https://chrisdone.com/posts/path-package/) - the motivation behind an unusually type-safe path handling library, written in Haskell (which blew my mind at the time).
 
 ---
 
