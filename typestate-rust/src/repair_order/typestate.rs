@@ -19,7 +19,7 @@ pub fn process(order: RepairOrder<New>) {
     let done = waiting.await_payment();
 }
 
-pub fn process_the_ultimate(
+pub fn process_fluent(
     order: RepairOrder<New>,
 ) -> Result<RepairOrder<Paid>, RepairOrder<Invalid>> {
     Ok(order
