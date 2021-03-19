@@ -195,4 +195,6 @@ I can recommend these articles:
 
 ---
 
+The full example code is available [here](https://github.com/TimoFreiberg/typestate-post/blob/master/typestate-rust/src/repair_order/typestate.rs).
+
 [^state-type-update]: The same verbose workaround is required in Kotlin. Haskell does not have the same issue, but then there's no in-place mutation in Haskell. There's a Rust [RFC](https://github.com/rust-lang/rfcs/pull/2528) in progress to improve this exact interaction.
