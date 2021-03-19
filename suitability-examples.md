@@ -1,9 +1,7 @@
 # The Case for the Typestate Pattern - Actually It Depends
-:source-highlighter: highlightjs
-:highlightjs-languages: rust
 
 So far, I introduced several approaches to designing types to represent states in Rust.
-I presented them in a clear order from worst to best, but this is not generally true.
+I presented them in a clear order from worst to best, but this ranking is .
 
 The reason why the typestate pattern suited the algorithm so well is mostly because the state transitions looked like this:
 
