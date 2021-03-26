@@ -19,9 +19,7 @@ pub fn process(order: RepairOrder<New>) {
     let done = waiting.await_payment();
 }
 
-pub fn process_fluent(
-    order: RepairOrder<New>,
-) -> Result<RepairOrder<Paid>, RepairOrder<Invalid>> {
+pub fn process_fluent(order: RepairOrder<New>) -> Result<RepairOrder<Paid>, RepairOrder<Invalid>> {
     Ok(order
         .validate()?
         .start_progress(find_idle_technician(), calculate_steps())
@@ -57,7 +55,7 @@ pub struct Paid {
 }
 
 impl<State> RepairOrder<State> {
-    fn with_state<NewState>(self, new_state: NewState) -> RepairOrder<NewState> {
+    pub fn with_state<NewState>(self, new_state: NewState) -> RepairOrder<NewState> {
         RepairOrder {
             order_number: self.order_number,
             damage_description: self.damage_description,

@@ -1,3 +1,4 @@
+pub mod complex_state;
 pub mod single_variables;
 pub mod state_enum;
 pub mod typestate;

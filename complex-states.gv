@@ -16,9 +16,9 @@ digraph G {
         init -> New;
         New -> Invalid
         New -> "April Fools"
-        "April Fools" -> Garbage
         New -> "Low Priority"
         New -> "High Priority"
+        "April Fools" -> Garbage
         Invalid -> Krangled
         Invalid -> Recovered
         Recovered -> New
@@ -30,12 +30,12 @@ digraph G {
         "Waiting for Worker" -> Garbage
         "Waiting for Worker" -> "Waiting for Printer"
         "Waiting for Printer" -> "Waiting for Friday afternoon"
+        "Waiting for Printer" -> "Work in Progress"
+        "Waiting for Printer" -> "Invalid"
         "Waiting for Friday afternoon" -> Krangled
         "Waiting for Friday afternoon" -> "Waiting for Printer"
-        "Waiting for Printer" -> "Work in Progress"
         "Work in Progress" -> "Low Priority"
         "Work in Progress" -> "Finished"
         "Work in Progress" -> "Waiting for Worker"
-        "Waiting for Printer" -> "Invalid"
 }
 
