@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use super::{calculate_steps, find_idle_technician, Customer, Employee};
 
 pub fn process(order: RepairOrder<New>) {
@@ -28,17 +30,20 @@ pub fn process_fluent(order: RepairOrder<New>) -> Result<RepairOrder<Paid>, Repa
         .await_payment())
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct RepairOrder<State> {
     pub order_number: u64,
     pub damage_description: Option<String>,
     pub vehicle: String,
     pub customer: Customer,
+    #[serde(flatten)]
     pub state: State,
 }
 
+#[derive(Deserialize)]
 pub struct New;
 pub struct Valid;
+#[derive(Debug, Serialize)]
 pub struct Invalid {
     pub validation_errors: Vec<String>,
 }
@@ -50,6 +55,7 @@ pub struct WorkDone;
 pub struct WaitingForPayment {
     pub invoice: String,
 }
+#[derive(Serialize)]
 pub struct Paid {
     pub invoice: String,
 }

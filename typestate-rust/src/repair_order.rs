@@ -2,8 +2,9 @@ pub mod complex_state;
 pub mod single_variables;
 pub mod state_enum;
 pub mod typestate;
+pub mod typestate_serialization_start_end;
 
-#[derive(Debug)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct Customer {
     has_outstanding_debt: bool,
     is_banned: bool,
