@@ -40,22 +40,32 @@ pub struct RepairOrder<State> {
     pub state: State,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct New;
+
+#[derive(Serialize, Deserialize)]
 pub struct Valid;
-#[derive(Debug, Serialize)]
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Invalid {
     pub validation_errors: Vec<String>,
 }
+
+#[derive(Serialize, Deserialize)]
 pub struct InProgress {
     pub assigned_technician: Employee,
     pub steps_left: Vec<String>,
 }
+
+#[derive(Serialize, Deserialize)]
 pub struct WorkDone;
+
+#[derive(Serialize, Deserialize)]
 pub struct WaitingForPayment {
     pub invoice: String,
 }
-#[derive(Serialize)]
+
+#[derive(Serialize, Deserialize)]
 pub struct Paid {
     pub invoice: String,
 }
@@ -68,6 +78,18 @@ impl<State> RepairOrder<State> {
             vehicle: self.vehicle,
             customer: self.customer,
             state: new_state,
+        }
+    }
+    pub fn update_state<NewState>(
+        self,
+        state_fn: impl FnOnce(State) -> NewState,
+    ) -> RepairOrder<NewState> {
+        RepairOrder {
+            order_number: self.order_number,
+            damage_description: self.damage_description,
+            vehicle: self.vehicle,
+            customer: self.customer,
+            state: state_fn(self.state),
         }
     }
 }
