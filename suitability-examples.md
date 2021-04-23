@@ -1,9 +1,8 @@
 # The Case for the Typestate Pattern - Actually It Depends
 
 So far, I introduced several approaches to designing types to represent states in Rust.
-I presented them in a clear order from worst to best, but this ranking is .
-
-There are several reasons why the typestate pattern suited the algorithm so well.
+I presented them in a clear order from worst to best, but this is not an objective ordering.
+I simply chose an algorithm that suited the typestate pattern well, for a few reasons:
 
 ## Simple state transitions
 
@@ -24,6 +23,16 @@ or at its most complex:
 ```rust
 fn(RepairOrder<New>) -> Result<RepairOrder<Valid>, RepairOrder<Invalid>>
 ```
+
+This made it quite easy to apply the pattern.
+
+## No IO
+
+The data is always received in the same state, any previous validation is omitted.
+The intermediate states also never leave the program memory.
+This means that there is no need to ever validate that, e.g. a `RepairOrder<WaitingForPayment>` is still in its correct state, as the data is not passed anywhere that could change the state[^immutable-language].
+
+## Ruining the typestate pattern with complex state transitions
 
 How would this look if the states looked more like this?
  
@@ -99,3 +108,6 @@ any more external state possibilities?
 any more aspects other than state complexity and out-of-process interactions?
 
 ----
+
+[^immutable-language]: It helps that Rust has a strict type system and controlled mutability so it's not possible to do something like that by mistake.
+It would be at least possible in C or JavaScript.
