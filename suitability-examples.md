@@ -1,16 +1,19 @@
 # The Case for the Typestate Pattern - Actually It Depends
 
-So far, I introduced several approaches to designing types to represent states in Rust.
-I presented them in a clear order from worst to best, but this is not an objective ordering.
+TODO ~tilde surrounded parts~ should be rephrased
+
+So far, I introduced several approaches on how to represent states in Rust.
+I presented them in a clear order from worst to best, but this ~is not an objective~ ordering.
 I simply chose an algorithm that suited the typestate pattern well, for a few reasons:
 
 ## Simple state transitions
 
-One of them is that the state transitions looked like this:
+The first reason is that the state transitions looked like this:
 
 image::states.svg["New, Invalid, Validated, Work In Progress, Waiting for Payment, Paid/Archived"]
 
-Note that most states are followed by exactly a single other state - the Invalid state even represents an early exit which was easy to model with a `return` (or a `?`).
+Note that most states transition into exactly one new state.
+Only the `New` state can transition to either `Validated` or `Invalid`, but the `Invalid` state leads to an early exit which is easy to model with a `return` (or a `?`).
 
 Function signatures for state transitions looked equivalent to this:
 
@@ -26,10 +29,10 @@ fn(RepairOrder<New>) -> Result<RepairOrder<Valid>, RepairOrder<Invalid>>
 
 This made it quite easy to apply the pattern.
 
-## No IO
+## No IO between the states
 
-The data is always received in the same state, any previous validation is omitted.
-The intermediate states also never leave the program memory.
+The data is always received in the same initial state, `New`.
+The intermediate states never leave the process memory.
 This means that there is no need to ever validate that, e.g. a `RepairOrder<WaitingForPayment>` is still in its correct state, as the data is not passed anywhere that could change the state[^immutable-language].
 
 ## Ruining the typestate pattern with complex state transitions
@@ -49,9 +52,39 @@ And we haven't even looked at a function that chains each state transition toget
 
 ```rust
 fn process(order: RepairOrder<New>) -> EndStates {
-    todo!()
+    match order.validate() {
+        OneOf4::A(invalid) => {
+            match invalid.recover() {
+                Ok(recovered) => {
+                    todo!()
+                }
+                Err(krangled) => {
+                    todo!()
+                }
+            }
+        },
+        OneOf4::B(low_prio) => {
+            match low_prio.enqueue() {
+                Ok(waiting_for_worker) => {
+                    todo!()
+                }
+                Err(high_prio) => {
+                    todo!()
+                }
+            }
+        }
+        OneOf4::C(high_prio) => {
+            todo!()
+        }
+        OneOf4::D(april_fools) => {
+            todo!()
+        }
+    }
 }
 ```
+
+Note that I did both of us a favor by stopping pretty early in this body.
+Obviously, a good implementation would extract everything 
 
 It's a lot less pleasant to work with this.
 
